@@ -1,0 +1,96 @@
+import type { GameSeed } from "./types";
+
+/** Demon's Souls (2020 remake) - PS4 y PS5 */
+export const DEMONS_SOULS: GameSeed = {
+  slug: "demons-souls",
+  title: "Demon's Souls",
+  tagline: "Almas perdido en la tierra de los muertos",
+  summary:
+    "Un alma no muerta atraviesa las tierras de Boletaria para descubrir su destino frente a las formas deformadas de sus habitantes.",
+  description:
+    "Remake de 2020 del clasico de 2009. El juego tiene una campana de 15 a 25 horas, repartida entre cinco mundos con rutas alternativas. La version de PS5 es un remake completo con lista de trofeos propia. El juego es totalmente offline.",
+  dev: "bluepoint-games",
+  pub: "sony-interactive",
+  date: "2020-11-19",
+  color: "#a3e635",
+  url: "https://www.playstation.com/es-es/games/demons-souls/",
+  pop: 720,
+  rec: "Platino de dificultad media: muy pocos trofeos de grind y sin online que dependa de la red.",
+  platforms: [
+    { slug: "ps4", date: "2020-11-19", original: true, notes: "Remake para PS4." },
+    { slug: "ps5", date: "2020-11-19", shared: false, notes: "Remake para PS5 con lista de trofeos propia." },
+  ],
+  categories: [
+    { slug: "soulslike", primary: true },
+    { slug: "accion" },
+    { slug: "rpg" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 15, max: 20 },
+    { k: "story_side", l: "Historia + secundarias", min: 20, max: 25 },
+    { k: "side_content", l: "Contenido secundario (jefes opcionales y Relative)", min: 5, max: 8 },
+    { k: "platinum", l: "Platino completo", min: 25, max: 35 },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 5, note: "La lista es corta y no hay grind pesado. El reto son los jefes opcionales." },
+    { k: "story", l: "Historia", s: 7, note: "Jefes de Sector 1 y 2 bastante exigentes." },
+    { k: "normal", l: "Normal", s: 7 },
+    { k: "hard", l: "Dificil", s: 8 },
+  ],
+  profile: {
+    total: 31,
+    gold: 11,
+    silver: 8,
+    bronze: 11,
+    hMin: 25,
+    hMax: 35,
+    runsMin: 1,
+    runsMax: 2,
+    grind: 2,
+    missables: false,
+    online: true,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno. Las rutas de los cinco mundos se pueden repetir desde el Fuente de las Almas.",
+    onlineNote:
+      "Tiene trofeos de Invasion de Almas y de mejora de equipo, pero se pueden conseguir conanerologos en lugar de otros jugadores. No requiere PS Plus.",
+    quick: "Platino corto y sin grind: cinco mundos, doce jefes principales y siete invasores opcionales. Nada depende de la red.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4 / PS5",
+    shared: false,
+    completeness: "parcial",
+    notes: "31 trofeos. Las versiones de PS4 y PS5 tienen listas propias con nombres equivalentes.",
+    trophies: [
+      { n: "Demons' Soul", k: "platinum", h: "Consigue todos los demas trofeos de Demon's Souls.", d: 7, s: "Al final de todo el proceso" },
+      { n: "King of the Hill", k: "gold", h: "Termina el camino de un Rey Anterior hasta su conclusion.", d: 6 },
+      { n: "Sword Master", k: "gold", h: "Derrota a los cinco Aromas.", d: 7 },
+      { n: "Prophetess", k: "gold", h: "Derrota a la Prophetess y consigue su Alma.", d: 6 },
+      { n: "Root-Air", k: "gold", h: "Derrota a Root-Air y consigue su Alma.", d: 6 },
+      { n: "Karma Demonic", k: "gold", h: "Consigue 50.000 karma en un solo mundo.", d: 7 },
+      { n: "Soul Collector", k: "silver", h: "Consigue todas las armas grandes.", d: 5 },
+      { n: "Ring Collector", k: "silver", h: "Consigue todos los anillos.", d: 5 },
+      { n: "Master of the Forge", k: "bronze", h: "Mejora una arma hasta +5 usando Golems.", d: 4 },
+      { n: "Lessons in Darkness", k: "bronze", h: "Consigue los objetos del area de tutorial.", d: 2 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de Demon's Souls",
+    summary: "Orden recomendado: mundo por mundo, con los invasores opcionales al final.",
+    steps: [
+      { title: "Completa el mundo 1", body: "Es el mas sencillo y da el equipo basico para el resto." },
+      { title: "Avanza al mundo 2", body: "Usa el Portal del Alma para desbloquear atajos. No vuelvas a shrine hasta que puedes." },
+      { title: "Avanza a los mundos 3 y 4", body: "Los enemigos son mas duros. Sube de nivel antes de cada jefe nuevo." },
+      { title: "Termina el mundo 5", body: "El ultimo sector tiene una dificultad muy alta. Lleva todo el equipo que puedas." },
+      { title: "Haz los invasores opcionales", body: "Los siete invasores opcionales dan la mayor parte de los trofeos de oro." },
+      { title: "Completa las listas de coleccionables", body: "Anillos, armas y objetos repartidos por los cinco mundos. La guia de cada objeto marca donde aparece." },
+      { title: "Consigue el Platino", body: "Con la lista completa, Demons' Soul cae solo." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/demons-souls-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "playstation-blog", url: "https://blog.playstation.com", scope: "Remake y listas por plataforma", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};

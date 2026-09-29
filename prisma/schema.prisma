@@ -1,0 +1,612 @@
+// ============================================================================
+// GamesHunter - Esquema de base de datos
+// ----------------------------------------------------------------------------
+// Diseñado para funcionar con SQLite (dev, sin instalación) y PostgreSQL (prod).
+// Para cambiar a PostgreSQL:
+//   1. DATABASE_URL="postgresql://..."
+//   2. provider = "postgresql"  (abajo)
+//   3. npm run db:push
+//
+// Notas de portabilidad: no se usan enums ni campos Json (SQLite no los soporta
+// en Prisma). Los "enums" son String con valores validados en la capa de
+// aplicación (src/lib/constants.ts) y constraints UNIQUE en la BD.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // <-- cambia a "postgresql" para producción
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Identidad y usuarios (arquitectura lista para registro/login)
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String?
+  passwordHash String
+  role         String   @default("user") // user | moderator | admin
+  status       String   @default("active") // active | suspended
+  avatarUrl    String?
+  bio          String?
+  locale       String   @default("es")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions     Session[]
+  favorites    Favorite[]
+  userGames    UserGame[]
+  userTrophies UserTrophy[]
+  platinaums   UserPlatinum[]
+  guides       Guide[]          @relation("GuideAuthor")
+  comparisons  Comparison[]
+  reviewNotes  DataProvenance[] @relation("ProvenanceReviewer")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ----------------------------------------------------------------------------
+// Taxonomía y referencias
+// ----------------------------------------------------------------------------
+
+model Platform {
+  id        String @id @default(cuid())
+  slug      String @unique // ps4 | ps5
+  name      String // PlayStation 4 | PlayStation 5
+  shortName String // PS4 | PS5
+  sortOrder Int    @default(0)
+
+  games       GamePlatform[]
+  releases    GameRelease[]
+  times       GameTime[]
+  trophyLists TrophyList[]
+  platinaums  UserPlatinum[]
+
+  @@map("platforms")
+}
+
+model Developer {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  name    String
+  country String?
+  website String?
+  games   Game[]  @relation("GameDeveloper")
+
+  @@map("developers")
+}
+
+model Publisher {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  name    String
+  website String?
+  games   Game[]  @relation("GamePublisher")
+
+  @@map("publishers")
+}
+
+model Category {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  name        String
+  description String?
+  icon        String? // nombre de icono del set de iconos
+  sortOrder   Int            @default(0)
+  games       GameCategory[]
+
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+// ----------------------------------------------------------------------------
+// Juego
+// ----------------------------------------------------------------------------
+
+model Game {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  title           String
+  originalTitle   String?
+  tagline         String?
+  summary         String
+  description     String
+  developerId     String
+  developer       Developer  @relation("GameDeveloper", fields: [developerId], references: [id])
+  publisherId     String?
+  publisher       Publisher? @relation("GamePublisher", fields: [publisherId], references: [id])
+  releaseDate     DateTime?
+  releaseDateText String? // ej. "4 de marzo de 2018" cuando la fecha es aproximada
+  coverImage      String?
+  heroImage       String?
+  accentColor     String     @default("#38bdf8")
+  officialUrl     String?
+  trailerUrl      String?
+
+  // Estado editorial
+  status             String  @default("draft") // draft | published | archived
+  dataStatus         String  @default("provisional") // verified | provisional | demo
+  isFeatured         Boolean @default(false)
+  featuredNote       String?
+  isRecommended      Boolean @default(false)
+  recommendationNote String?
+  popularity         Int     @default(0) // desnormalizado: nº de visitas, para "populares"
+  viewCount          Int     @default(0)
+
+  // Índice de búsqueda desnormalizado y mantenido por la aplicación.
+  // Permite búsquedas rápidas y "mientras escribes" sin joins pesados.
+  searchText String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  platforms       GamePlatform[]
+  categories      GameCategory[]
+  releases        GameRelease[]
+  times           GameTime[]
+  difficulties    DifficultyRating[]
+  platinumProfile PlatinumProfile?
+  trophyLists     TrophyList[]
+  trophies        Trophy[]
+  gameTrophies    GameTrophy[]
+  guides          Guide[]
+  favorites       Favorite[]
+  userGames       UserGame[]
+  platinaums      UserPlatinum[]
+  comparisons     ComparisonItem[]
+
+  @@index([status, popularity])
+  @@index([status, releaseDate])
+  @@index([dataStatus])
+  @@index([developerId])
+  @@index([isFeatured])
+  @@index([isRecommended])
+  @@map("games")
+}
+
+model GamePlatform {
+  id               String   @id @default(cuid())
+  gameId           String
+  game             Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platformId       String
+  platform         Platform @relation(fields: [platformId], references: [id])
+  // ¿Comparte lista de trofeos con la otra versión?
+  sharesTrophyList Boolean  @default(true)
+  notes            String?
+
+  @@unique([gameId, platformId])
+  @@index([platformId])
+  @@map("game_platforms")
+}
+
+model GameRelease {
+  id          String    @id @default(cuid())
+  gameId      String
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platformId  String
+  platform    Platform  @relation(fields: [platformId], references: [id])
+  releaseDate DateTime?
+  dateText    String?
+  isOriginal  Boolean   @default(false)
+
+  @@unique([gameId, platformId])
+  @@map("game_releases")
+}
+
+model GameCategory {
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  isPrimary  Boolean  @default(false)
+
+  @@id([gameId, categoryId])
+  @@index([categoryId])
+  @@map("game_categories")
+}
+
+// ----------------------------------------------------------------------------
+// Tiempos  (historia, historia+secundarias, contenido, platino...)
+// ----------------------------------------------------------------------------
+
+model GameTime {
+  id         String       @id @default(cuid())
+  gameId     String
+  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platformId String?
+  platform   Platform?    @relation(fields: [platformId], references: [id])
+  kind       String // main_story | story_side | side_content | platinum | completionist
+  label      String
+  minHours   Float
+  maxHours   Float
+  note       String?
+  sortOrder  Int          @default(0)
+  sourceId   String?
+  source     GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, kind])
+  @@index([kind])
+  @@map("game_times")
+}
+
+// ----------------------------------------------------------------------------
+// Dificultad  (Platino ≠ dificultad del juego)
+// ----------------------------------------------------------------------------
+
+model DifficultyRating {
+  id        String       @id @default(cuid())
+  gameId    String
+  game      Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  kind      String // platinum | story | game | easy | normal | hard | brutal | master
+  label     String // "Platino", "Historia", "Difícil"...
+  score     Int // 1..10
+  note      String?
+  sortOrder Int          @default(0)
+  sourceId  String?
+  source    GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, kind])
+  @@index([kind, score])
+  @@map("difficulty_ratings")
+}
+
+// ----------------------------------------------------------------------------
+// Ficha de Platino: el resumen "de un vistazo" de cada juego
+// ----------------------------------------------------------------------------
+
+model PlatinumProfile {
+  id                    String       @id @default(cuid())
+  gameId                String       @unique
+  game                  Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  totalTrophies         Int          @default(0)
+  platinumCount         Int          @default(1)
+  goldCount             Int          @default(0)
+  silverCount           Int          @default(0)
+  bronzeCount           Int          @default(0)
+  estimatedHoursMin     Float?
+  estimatedHoursMax     Float?
+  playthroughsMin       Int?
+  playthroughsMax       Int?
+  grindRating           Int? // 1..10
+  hasMissables          Boolean      @default(false)
+  hasOnline             Boolean      @default(false)
+  hasMissableOnline     Boolean      @default(false)
+  difficultyLinked      Boolean      @default(false) // hay trofeos atados a una dificultad concreta
+  requiresMaxDifficulty Boolean      @default(false)
+  hasCollectibles       Boolean      @default(false)
+  requiresActiveServers Boolean      @default(false)
+  requiresPSPlus        Boolean      @default(false)
+  requiresDLC           Boolean      @default(false)
+  platinumAfterEnding   Boolean      @default(true)
+  missableTrophies      String? // texto resumen: cuáles y cómo evitarlos
+  onlineTrophies        String?
+  difficultyTrophies    String?
+  quickSummary          String? // resumen propio en 2-3 frases
+  sourceId              String?
+  source                GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@map("platinum_profiles")
+}
+
+// ----------------------------------------------------------------------------
+// Trofeos
+// ----------------------------------------------------------------------------
+
+model Trophy {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  name                String
+  type                String // platinum | gold | silver | bronze
+  iconUrl             String?
+  officialDescription String? // texto oficial de PlayStation (uso permitido) o null
+  gameId              String
+  game                Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  entries      GameTrophy[]
+  userTrophies UserTrophy[]
+
+  @@index([gameId, type])
+  @@map("trophies")
+}
+
+// Una lista de trofeos por juego+plataforma. Si sharesTrophyList, se repite por versión.
+model TrophyList {
+  id           String       @id @default(cuid())
+  gameId       String
+  game         Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platformId   String?
+  platform     Platform?    @relation(fields: [platformId], references: [id])
+  name         String
+  isShared     Boolean      @default(true)
+  isDefault    Boolean      @default(false)
+  totalCount   Int          @default(0)
+  completeness String       @default("parcial") // completa | parcial | demo
+  notes        String?
+  sourceId     String?
+  source       GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  entries GameTrophy[]
+
+  @@unique([gameId, platformId])
+  @@index([gameId])
+  @@map("trophy_lists")
+}
+
+// game_trophies = relación juego ↔ trofeo con la información de esa partida concreta
+model GameTrophy {
+  id                 String       @id @default(cuid())
+  gameId             String
+  game               Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  trophyListId       String
+  trophyList         TrophyList   @relation(fields: [trophyListId], references: [id], onDelete: Cascade)
+  trophyId           String
+  trophy             Trophy       @relation(fields: [trophyId], references: [id], onDelete: Cascade)
+  sortOrder          Int          @default(0)
+  howTo              String // explicación propia, en español
+  difficulty         Int          @default(3) // 1..10 dificultad estimada del trofeo
+  isMissable         Boolean      @default(false)
+  isOnline           Boolean      @default(false)
+  recommendedStage   String // "Antes de la misión final" / "Cualquier momento" ...
+  requiresDifficulty String? // "Difícil" | "Máxima dificultad" | null
+  isDLC              Boolean      @default(false)
+  isUnobtainable     Boolean      @default(false)
+  note               String?
+  sourceId           String?
+  source             GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  userTrophies UserTrophy[]
+
+  @@unique([trophyListId, trophyId])
+  @@index([gameId])
+  @@index([trophyListId, sortOrder])
+  @@map("game_trophies")
+}
+
+// ----------------------------------------------------------------------------
+// Guías
+// ----------------------------------------------------------------------------
+
+model Guide {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  gameId      String?
+  game        Game?     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  kind        String    @default("platino") // platino | trofeo | general | inicio
+  title       String
+  summary     String
+  body        String // contenido en Markdown propio
+  status      String    @default("draft") // draft | published
+  dataStatus  String    @default("provisional")
+  isCommunity Boolean   @default(false) // aportado por un usuario
+  authorId    String?
+  author      User?     @relation("GuideAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  readingTime Int       @default(3)
+  viewCount   Int       @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  steps   GuideStep[]
+  sources GuideSourceRef[]
+
+  @@index([gameId])
+  @@index([status, kind])
+  @@map("guides")
+}
+
+model GuideStep {
+  id         String  @id @default(cuid())
+  guideId    String
+  guide      Guide   @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  stepNumber Int
+  title      String
+  body       String
+  warning    String? // aviso destacado (perdible, online...)
+  sortOrder  Int     @default(0)
+
+  @@unique([guideId, stepNumber])
+  @@map("guide_steps")
+}
+
+// ----------------------------------------------------------------------------
+// Fuentes de datos y trazabilidad
+// ----------------------------------------------------------------------------
+
+model GuideSource {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  homepage    String?
+  logoUrl     String?
+  // Política de uso: qué podemos hacer con la información de esta fuente
+  usagePolicy String  @default("enlace") // enlace | resumen | texto_parcial | desconocido
+  allowsCopy  Boolean @default(false)
+  notes       String?
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  times        GameTime[]
+  difficulties DifficultyRating[]
+  profiles     PlatinumProfile[]
+  trophyLists  TrophyList[]
+  trophies     GameTrophy[]
+  guideRefs    GuideSourceRef[]
+  provenance   DataProvenance[]
+
+  @@map("guide_sources")
+}
+
+model GuideSourceRef {
+  id          String      @id @default(cuid())
+  guideId     String
+  guide       Guide       @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  sourceId    String
+  source      GuideSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  url         String
+  lastUpdated DateTime?
+  confidence  String      @default("media") // alta | media | baja
+  scope       String? // qué campos cubre esta fuente
+  note        String?
+
+  @@unique([guideId, sourceId, url])
+  @@index([sourceId])
+  @@map("guide_source_refs")
+}
+
+// Trazabilidad genérica por dato: qué campo de qué entidad viene de qué fuente.
+// entityType: game | gameTime | difficulty | platinumProfile | trophy | gameTrophy | guide
+model DataProvenance {
+  id           String       @id @default(cuid())
+  entityType   String
+  entityId     String
+  field        String
+  sourceId     String?
+  source       GuideSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  sourceUrl    String?
+  lastUpdated  DateTime     @default(now())
+  confidence   String       @default("media") // alta | media | baja
+  dataStatus   String       @default("provisional") // verified | provisional | demo
+  note         String?
+  reviewedById String?
+  reviewedBy   User?        @relation("ProvenanceReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+
+  @@index([entityType, entityId])
+  @@index([sourceId])
+  @@map("data_provenance")
+}
+
+// ----------------------------------------------------------------------------
+// Actividad del usuario
+// ----------------------------------------------------------------------------
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([gameId])
+  @@map("favorites")
+}
+
+model UserGame {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId      String
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  status      String    @default("backlog") // backlog | playing | completed | abandoned
+  platformId  String?
+  progress    Int       @default(0) // 0..100
+  hoursPlayed Float?
+  difficulty  String? // fácil | normal | difícil | máxima
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, gameId])
+  @@index([userId, status])
+  @@index([gameId])
+  @@map("user_games")
+}
+
+model UserTrophy {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId       String
+  trophyId     String
+  trophy       Trophy      @relation(fields: [trophyId], references: [id], onDelete: Cascade)
+  gameTrophyId String?
+  gameTrophy   GameTrophy? @relation(fields: [gameTrophyId], references: [id], onDelete: SetNull)
+  earnedAt     DateTime?
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, trophyId])
+  @@index([gameId])
+  @@map("user_trophies")
+}
+
+model UserPlatinum {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId     String
+  game       Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platformId String?
+  platform   Platform? @relation(fields: [platformId], references: [id])
+  earnedAt   DateTime?
+  grade      String? // oro | plata | bronce
+  isGold     Boolean   @default(false)
+  guideUrl   String?
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([gameId])
+  @@map("user_platinums")
+}
+
+// ----------------------------------------------------------------------------
+// Comparador
+// ----------------------------------------------------------------------------
+
+model Comparison {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items ComparisonItem[]
+
+  @@map("comparisons")
+}
+
+model ComparisonItem {
+  id           String     @id @default(cuid())
+  comparisonId String
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  gameId       String
+  game         Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  position     Int        @default(0)
+
+  @@unique([comparisonId, gameId])
+  @@index([gameId])
+  @@map("comparison_items")
+}

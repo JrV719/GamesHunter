@@ -1,0 +1,93 @@
+import type { GameSeed } from "./types";
+
+/** Horizon Forbidden West (2022) - PS4 y PS5 */
+export const HORIZON_FORBIDDEN_WEST: GameSeed = {
+  slug: "horizon-forbidden-west",
+  title: "Horizon Forbidden West",
+  tagline: "Aloy busca respuestas en el oeste prohibido",
+  summary:
+    "Aloy parte hacia el oeste prohibido para averiguar que le ocurrio a su hermana y detener la amenaza de una nueva machine de ⋅ Dawn.",
+  description:
+    "Secuela de Horizon Zero Dawn con un mapa mas vertical y mas grande. La campana principal dura entre 15 y 20 horas. Incluye la expansion Burning Shores, que anade una campana corta y sus propios trofeos, pero no es obligatoria para el platino del juego base.",
+  dev: "guerrilla-games",
+  pub: "sony-interactive",
+  date: "2022-02-25",
+  color: "#22d3ee",
+  url: "https://www.playstation.com/es-es/games/horizon-forbidden-west/",
+  pop: 970,
+  rec: "Muy buen equilibrio entre dificultad y tiempo: sin perdibles y con trofeos de dificultad opcional bien marcados.",
+  platforms: [
+    { slug: "ps4", date: "2022-02-25", original: true },
+    { slug: "ps5", date: "2022-02-25", shared: true, notes: "Incluye mejoras visuales y 60 fps. Comparte lista de trofeos con PS4." },
+  ],
+  categories: [
+    { slug: "accion", primary: true },
+    { slug: "mundo-abierto" },
+    { slug: "rpg" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 15, max: 20 },
+    { k: "story_side", l: "Historia + secundarias", min: 28, max: 35 },
+    { k: "side_content", l: "Contenido secundario (bausas y Relative)", min: 10, max: 15 },
+    { k: "platinum", l: "Platino completo (sin Burning Shores)", min: 45, max: 55 },
+    { k: "completionist", l: "Platino + Burning Shores", min: 55, max: 70, note: "La expansion anade su propia lista de trofeos." },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 7, note: "La mayor parte del trabajo es hacer los bausas contra las machines mas fuertes." },
+    { k: "story", l: "Historia", s: 5 },
+    { k: "normal", l: "Normal", s: 5 },
+    { k: "hard", l: "Dificil", s: 7 },
+  ],
+  profile: {
+    total: 43,
+    gold: 15,
+    silver: 11,
+    bronze: 16,
+    hMin: 45,
+    hMax: 55,
+    runsMin: 1,
+    runsMax: 1,
+    grind: 3,
+    missables: false,
+    online: false,
+    diffLinked: true,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno en el juego base. La expansion Burning Shores es opcional.",
+    onlineNote: "Ninguno. No hay trofeos online en el juego base.",
+    quick: "Platino de recorrido largo: historia, Relative, bausas y trofeos de dificultad opcional. Nada se pierde, pero hay mucho que recorrer.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4 / PS5 (juego base)",
+    shared: true,
+    completeness: "parcial",
+    notes: "43 trofeos en el juego base. Burning Shores tiene lista propia.",
+    trophies: [
+      { n: "All Growth", k: "platinum", h: "Consigue todos los demas trofeos de Horizon Forbidden West.", d: 9, s: "Al final de todo el proceso" },
+      { n: "Ride the Metal Fish", k: "gold", h: "Derrota a la machine del Metropolis mientras vas montado en una de ellas.", d: 7 },
+      { n: "Death's Door", k: "gold", h: "Gana todos los combates de la Umbrena sin daño acumulado.", d: 8, nd: "Dificil o superior" },
+      { n: "Two For One", k: "gold", h: "Derrota a una machine con el arma de fuego de another's.", d: 6 },
+      { n: "Fallenwing", k: "gold", h: "Derrota a la machine de captura voladora.", d: 6 },
+      { n: "Tame the Water", k: "gold", h: "Limpia las Juvenile machines del cenagalde.", d: 5 },
+      { n: "Sucker Punch", k: "silver", h: "Limpia un nido de Tallnecks del area.", d: 4 },
+      { n: "Shadow on the Sand", k: "silver", h: "Completa una Relative del oeste.", d: 3 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de Horizon Forbidden West",
+    summary: "Orden de limpieza del oeste: historia, Relative, bausas y trofeos de dificultad opcional.",
+    steps: [
+      { title: "Termina la historia", body: "Quince a veinte horas. Ningun trofeo se pierde al avanzar." },
+      { title: "Haz las Relative", body: "Son la base del 100%. El mapa las marca todas." },
+      { title: "Haz los bausas", body: "Los bausas dan las piezas de armadura. las maquinas mas fuertes requieren subir de nivel o cambiar de estrategia." },
+      { title: "Completa los trofeos de dificultad opcional", body: "Hay trofeos que exigen dificultad Dificil o superior. Hazlos al final, cuando domines el combate." },
+      { title: "Limpia los nestos", body: "Los nidos de Tallnecks y de otras machines dan varios trofeos de plata." },
+      { title: "Consigue el Platino", body: "Con la lista completa del juego base, All Growth cae solo." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/horizon-forbidden-west-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};

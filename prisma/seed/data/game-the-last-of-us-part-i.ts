@@ -1,0 +1,97 @@
+import type { GameSeed } from "./types";
+
+/** The Last of Us Part I - PS4 y remake de PS5 con listas independientes */
+export const TLOU_PART_I: GameSeed = {
+  slug: "the-last-of-us-part-i",
+  title: "The Last of Us Part I",
+  tagline: "Joel y Ellie cruzan America para sobrevivir",
+  summary:
+    "Joel escorta a Ellie por un America en ruinas en uno de los viajes de supervivencia mas icónicos del genero.",
+  description:
+    "Aventura narrativa sin sistema de mundo abierto. La campana dura entre 12 y 15 horas en primer playthrough y unas 8 horas con soltura. El remake para PS5 tiene lista de trofeos propia, con nombres equivalentes y algunos trofeos adicionales por las mejoras tecnicas. Ninguna de las dos versiones tiene trofeos online.",
+  dev: "naughty-dog",
+  pub: "sony-interactive",
+  date: "2013-06-14",
+  color: "#a78bfa",
+  url: "https://www.playstation.com/es-es/games/the-last-of-us-part-i/",
+  pop: 1010,
+  rec: "Uno de los platinos mas tranquilos: lista corta, sin perdibles y con muy poco contenido opcional obligatorio.",
+  platforms: [
+    { slug: "ps4", date: "2013-06-14", original: true, notes: "Version original de PS4." },
+    {
+      slug: "ps5",
+      date: "2022-09-02",
+      shared: false,
+      notes: "Remake para PS5. Lista de trofeos independiente de la de PS4.",
+    },
+  ],
+  categories: [
+    { slug: "aventura", primary: true },
+    { slug: "terror" },
+    { slug: "accion" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 12, max: 15 },
+    { k: "story_side", l: "Historia + secundarias", min: 13, max: 16 },
+    { k: "side_content", l: "Contenido secundario (artefactos y OPC)", min: 3, max: 5 },
+    { k: "platinum", l: "Platino completo", min: 15, max: 18 },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 2, note: "Lista muy corta y sin perdibles. Es de los platinos mas rapidos de PS4." },
+    { k: "story", l: "Historia", s: 3, note: "La dificultad sube hacia el final, pero no hay trofeos atados a ella." },
+    { k: "normal", l: "Normal", s: 3 },
+    { k: "hard", l: "Dificil (Later)", s: 6 },
+  ],
+  profile: {
+    total: 20,
+    gold: 6,
+    silver: 3,
+    bronze: 10,
+    hMin: 15,
+    hMax: 18,
+    runsMin: 1,
+    runsMax: 1,
+    grind: 1,
+    missables: false,
+    online: false,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno. Todas las decisiones de la historia dejan el mismo numero de trofeos disponibles.",
+    onlineNote: "Ninguno. Ni la version de PS4 ni el remake de PS5 tienen componentes online con trofeos.",
+    quick: "Platino muy corto: termina la historia y recoge los artefactos y las entradas del guion. En total, unas 15-18 horas.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4 / Remake PS5",
+    shared: false,
+    completeness: "parcial",
+    notes: "20 trofeos en la version de PS4. El remake de PS5 tiene su propia lista con nombres equivalentes.",
+    trophies: [
+      { n: "I Want to Be a Hero", k: "platinum", h: "Consigue todos los demas trofeos de The Last of Us Part I.", d: 5, s: "Al final de todo el proceso" },
+      { n: "Chapter 1", k: "gold", h: "Termina el capitulo 1 de la historia principal.", d: 2 },
+      { n: "Chapter 2", k: "gold", h: "Termina el capitulo 2 de la historia principal.", d: 2 },
+      { n: "The Hunter", k: "silver", h: "Completa los tres OPC de temporada con el grupo.", d: 3 },
+      { n: "Rags for Brutes", k: "silver", h: "Recoge los nueve fragmentos de tela para la armadura de tiranos.", d: 2 },
+      { n: "The Downtown Gym", k: "bronze", h: "Completa el evento del gimnasio del centro.", d: 2 },
+      { n: "Grave Danger", k: "bronze", h: "Consigue la mochila de Joel.", d: 1 },
+      { n: "The Art of Survival", k: "bronze", h: "Encuentra los cinco artefactos de la tienda de Joel.", d: 2 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de The Last of Us Part I",
+    summary: "La guia mas corta del catalogo: historia y cinco objetos opcionales por capitulo.",
+    steps: [
+      { title: "Termina la historia", body: "Doce a quince horas si es tu primera vez. Ocho si conoces el juego." },
+      { title: "Recoge los artefactos de cada tienda", body: "Hay cinco por capitulo. Aparecen al entrar en cada zona nueva: mira los estantes y las cajas." },
+      { title: "Completa las entradas de guion", body: "Son las notas que cuentan lo ocurrido antes del juego. Breves y necesarias para el 100%." },
+      { title: "Haz los OPC de temporada", body: "El OPC con el grupo da el trofeo de plata. El resto de OPC son opcionales para el platino." },
+      { title: "Recoge los fragmentos de tela", body: "Nueve telas dan el trofeo de la armadura de tiranos. Se encuentran en capitulos concretos." },
+      { title: "Consigue el Platino", body: "Con la lista completa, I Want to Be a Hero cae solo." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/the-last-of-us-part-i-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "playstation-blog", url: "https://blog.playstation.com", scope: "Remake para PS5 y lista independiente", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};

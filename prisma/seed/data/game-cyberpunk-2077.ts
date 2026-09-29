@@ -1,0 +1,97 @@
+import type { GameSeed } from "./types";
+/** Cyberpunk 2077 (2020) - PS4 y PS5 */
+export const CYBERPUNK_2077: GameSeed = {
+  slug: "cyberpunk-2077",
+  title: "Cyberpunk 2077",
+  tagline: "Vive a tu manera en Night City",
+  summary:
+    "V, una pirata de datos, toma control del cuerpo de un miembro de la banda en la ciudad de Night City.",
+  description:
+    "RPG de mundo abierto en una megaciudad futurista. La campana principal dura entre 20 y 30 horas y el contenido opcional es muy amplio. La expansion Phantom Liberty es opcional y aporta su propia lista de trofeos. El juego tiene una de las listas de trofeos mas largas de PS4 y PS5, con unos 90 trofeos en total.",
+  dev: "cd-projekt-red",
+  pub: "cd-projekt",
+  date: "2020-12-10",
+  color: "#facc15",
+  url: "https://www.playstation.com/es-es/games/cyberpunk-2077/",
+  pop: 1150,
+  platforms: [
+    { slug: "ps4", date: "2020-12-10", original: true },
+    {
+      slug: "ps5",
+      date: "2022-09-02",
+      shared: true,
+      notes: "La actualizacion 2.0 esta disponible en PS5 y el juego base mantiene la misma lista de trofeos.",
+    },
+  ],
+  categories: [
+    { slug: "rpg", primary: true },
+    { slug: "mundo-abierto" },
+    { slug: "accion" },
+    { slug: "ficcion-interactiva" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 20, max: 25 },
+    { k: "story_side", l: "Historia + secundarias", min: 35, max: 45 },
+    { k: "side_content", l: "Contenido secundario (relatos y PNJ)", min: 15, max: 25 },
+    { k: "platinum", l: "Platino completo (juego base)", min: 60, max: 80 },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 9, note: "Uno de los platinos mas exigentes: lista muy larga y trofeos que dependen de decisiones." },
+    { k: "story", l: "Historia", s: 4 },
+    { k: "normal", l: "Normal", s: 4 },
+    { k: "hard", l: "Dificil", s: 6 },
+  ],
+  profile: {
+    total: 90,
+    gold: 26,
+    silver: 30,
+    bronze: 33,
+    hMin: 60,
+    hMax: 80,
+    runsMin: 1,
+    runsMax: 2,
+    grind: 6,
+    missables: true,
+    online: false,
+    collectibles: true,
+    afterEnding: true,
+    missableNote:
+      "Varios trofeos dependen de decisiones concretas en las misiones principales. Si rechazas ciertas opciones al principio, puede que no puedas volver atras.",
+    onlineNote: "Ninguno. El juego no tiene componentes online con trofeos en PS4 ni PS5.",
+    quick: "Platino largo y con decisiones criticas. Recomendado hacer una partida centrada en la historia y despues la limpieza de logros.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4 / PS5 (juego base)",
+    shared: true,
+    completeness: "parcial",
+    notes: "El juego base tiene alrededor de 90 trofeos. Phantom Liberty tiene su propia lista.",
+    trophies: [
+      { n: "The Spread", k: "platinum", h: "Consigue todos los demas trofeos de Cyberpunk 2077.", d: 10, s: "Al final de todo el proceso" },
+      { n: "The Rescue", k: "gold", h: "Completa la historia principal hasta el rescate de V.", d: 5 },
+      { n: "Chippin' In", k: "gold", h: "Completa la ruta de Jackie Welles en El Asalto.", d: 4, m: true, s: "Al empezar: acepta la ruta de V" },
+      { n: "Both Sides, Now", k: "gold", h: "Completa la ruta de Relja en el asedio del Relja.", d: 4, m: true, s: "Al empezar: acepta la ruta de Relja" },
+      { n: "Mastery", k: "gold", h: "Sube todas las habilidades al nivel maximo.", d: 8 },
+      { n: "Jailbreak", k: "gold", h: "Encuentra a todos los miembros de la banda.", d: 5 },
+      { n: "Legendary", k: "gold", h: "Consigue el arma legendary del katana de Jackie.", d: 5 },
+      { n: "Balls to the Wall", k: "silver", h: "Completa la misión de la torre de Arasaka.", d: 6 },
+      { n: "Gwent", k: "bronze", h: "Gana todos los juegos de Gwent.", d: 4 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de Cyberpunk 2077",
+    summary: "El platino mas largo del catalogo. La clave es decidir la ruta de las misiones principales desde el principio.",
+    steps: [
+      { title: "Decide las rutas al principio", body: "Aceptar la ruta de Jackie o la de Relja en El Asalto decide si podras conseguir sus respectivos trofeos. Si lo tienes claro, no hay problema." },
+      { title: "Termina la historia", body: "Veinte a treinta horas. Haz una partida centrada en la historia para no mezclar prioridades." },
+      { title: "Sube las habilidades al maximo", body: "Es el trofeo de grind mas pesado. Se puede_gradient con puntos de actividad repartidos por todo el juego." },
+      { title: "Completa los encargos (ENC)", body: "Los encargos de trabajo dan buena parte de los trofeos de plata. Se pueden repetir con dificultad adecuada." },
+      { title: "Completa los PNJ y el contenido opcional", body: "Los PNJ con icono de objetivo y las citas opcionales dan buena parte de los trofeos de bronce." },
+      { title: "Consigue el Platino", body: "Con la lista del juego base completa, The Spread cae solo. Phantom Liberty es aparte." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/cyberpunk-2077-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos y trofeos perdibles", confidence: "media" },
+  ],
+};

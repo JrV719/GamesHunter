@@ -1,0 +1,95 @@
+import type { GameSeed } from "./types";
+
+/** God of War Ragnarok (2022) */
+export const GOD_OF_WAR_RAGNAROK: GameSeed = {
+  slug: "god-of-war-ragnarok",
+  title: "God of War Ragnarok",
+  tagline: "El final de la saga de Kratos",
+  summary:
+    "Kratos y Atreus recorren los nueve reinos cara a cara con Odin, en el desenlace de la saga iniciada en 2018.",
+  description:
+    "Un ano despues de God of War, Kratos y Atreus se preparan para la batalla final contra Odin. El mapa se amplia con Gbiron y permite visitar Aspiria desde el principio. La historia principal dura entre 8 y 10 horas, y el contenido opcional es muy amplio: santuarios, cofres, reliquias y cazas de bestias.",
+  dev: "santa-monica-studio",
+  pub: "sony-interactive",
+  date: "2022-11-09",
+  color: "#818cf8",
+  url: "https://www.playstation.com/es-es/games/god-of-war-ragnarok/",
+  pop: 1120,
+  rec: "Gran historia y mucho contenido. El platino sube por el volumen de coleccionables, no por los perdibles.",
+  platforms: [
+    { slug: "ps4", date: "2022-11-09", original: true },
+    { slug: "ps5", date: "2022-11-09", shared: true, notes: "Incluye contenido extra de PS5: Cradle of Ascension." },
+  ],
+  categories: [
+    { slug: "accion", primary: true },
+    { slug: "aventura" },
+    { slug: "rpg" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 8, max: 10 },
+    { k: "story_side", l: "Historia + secundarias", min: 16, max: 22 },
+    { k: "side_content", l: "Contenido secundario (santuarios, cofres y caza)", min: 10, max: 16 },
+    { k: "platinum", l: "Platino completo (sin DLC)", min: 30, max: 40 },
+    { k: "completionist", l: "Platino + Valhalla", min: 45, max: 60, note: "Valhalla tiene lista de trofeos propia y no es necesaria para este platino." },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 6, note: "Sin trofeos perdibles ni online. El esfuerzo es de volumen: hay que ver los nueve reinos." },
+    { k: "story", l: "Historia", s: 5, note: "Combate mas approachable que en 2018 gracias a las habilidades de Atreus." },
+    { k: "normal", l: "Normal", s: 5 },
+    { k: "hard", l: "Dificil", s: 8 },
+    { k: "brutal", l: "Muy dificil", s: 10 },
+  ],
+  profile: {
+    total: 44,
+    gold: 12,
+    silver: 18,
+    bronze: 13,
+    hMin: 30,
+    hMax: 40,
+    runsMin: 1,
+    runsMax: 1,
+    grind: 3,
+    missables: false,
+    online: false,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno en el juego base. Valhalla es opcional y no es necesaria para este platino.",
+    onlineNote: "Ninguno. El juego es completamente offline.",
+    quick:
+      "Platino sin sobresaltos pero con mucho volumen: nueve reinos, santuarios, cazas de bestias y tesoros escondidos. Es cuestion de paciencia, no de riesgo.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4 / PS5 (juego base)",
+    shared: true,
+    completeness: "parcial",
+    notes: "44 trofeos en el juego base. Valhalla tiene lista aparte.",
+    trophies: [
+      { n: "Ragnarok", k: "platinum", h: "Consigue todos los demas trofeos de God of War Ragnarok.", d: 9, s: "Al final de todo el proceso" },
+      { n: "A New Journey", k: "gold", h: "Completa todos los santuarios del juego.", d: 5 },
+      { n: "Gna", k: "gold", h: "Libera a Gna de su prision en Svartalfheim.", d: 4 },
+      { n: "Jormungandr", k: "gold", h: "Captura a la serpiente gigante durante la secuencia de captura.", d: 6 },
+      { n: "Brok Half Blue", k: "gold", h: "Gana la partida de Brok con Angrboda en la secuencia de la serpiente.", d: 6 },
+      { n: "Untouchable", k: "gold", h: "Termina la secuencia de sigilo en Asgard sin que te detecten.", d: 8 },
+      { n: "Kratos' Resurrection", k: "silver", h: "Recupera todas las piezas de la armadura de Kratos en el Santuario de los Ecos.", d: 3 },
+      { n: "Sickly Sickly", k: "bronze", h: "Libera a los sicklys del santuario de Niflheim.", d: 2 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de God of War Ragnarok",
+    summary: "Orden de limpieza de los nueve reinos para pasar de la historia al platino sin repetir mapa.",
+    steps: [
+      { title: "Termina la historia principal", body: "Ocho a diez horas. Puedes empezar en cualquier dificultad: no hay trofeos atados a un nivel concreto." },
+      { title: "Recorre Aspiria al final", body: "Al terminar la historia Aspiria se abre del todo. Es la region con mas santuarios." },
+      { title: "Completa region por region", body: "Ve region por region y no saltes de una a otra. Cada santuario da artefacto y experiencia." },
+      { title: "Haz las cazas de bestias", body: "Las cazas dan los tesoros mas valiosos. Marcalas en el mapa para volver cuando subas de nivel." },
+      { title: "Busca los tesoros escondidos", body: "Hay cofres que solo aparecen con poca vida y escondites con paredes invisibles." },
+      { title: "Revisa los artefactos", body: "Los artefactos del juego base dan varios trofeos. Valhalla no es necesario." },
+      { title: "Consigue el Platino", body: "Con la lista al 100% se otorga Ragnarok." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/god-of-war-ragnarok-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};

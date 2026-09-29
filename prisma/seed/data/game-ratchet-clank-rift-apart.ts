@@ -1,0 +1,93 @@
+import type { GameSeed } from "./types";
+
+/** Ratchet & Clank: Rift Apart (2021) - exclusivo de PS5 */
+export const RATCHET_CLANK_RIFT_APART: GameSeed = {
+  slug: "ratchet-clank-rift-apart",
+  title: "Ratchet & Clank: Rift Apart",
+  tagline: "Dos heroes, dos dimensiones",
+  summary:
+    "Ratchet y Clank tienen que cerrar la brecha entre dos dimensiones y restaurar el equilibrio antes de que sea demasiado tarde.",
+  description:
+    "Plataformas de accion con combate de armas, parkour y relacion directa con PS5 a traves del DualSense. La campana principal dura entre 6 y 8 horas, muy corta para el genero. El platino se basa sobre todo en la limpieza de Trofeos de Zurkon y Rs. La campana tiene dos actos con una transicion entre ambos.",
+  dev: "insomniac-games",
+  pub: "sony-interactive",
+  date: "2021-06-10",
+  color: "#f97316",
+  url: "https://www.playstation.com/es-es/games/ratchet-clank-rift-apart/",
+  pop: 640,
+  rec: "Uno de los platinos mas rapidos de PS5: historia corta, sin perdibles y sin online. Ideal para empezar en la plataforma.",
+  platforms: [
+    { slug: "ps5", date: "2021-06-10", original: true, notes: "Exclusivo de PS5. Usa funciones del DualSense." },
+  ],
+  categories: [
+    { slug: "plataformas", primary: true },
+    { slug: "accion" },
+    { slug: "aventura" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 6, max: 8 },
+    { k: "story_side", l: "Historia + secundarias", min: 9, max: 12 },
+    { k: "side_content", l: "Contenido secundario (Zurkon y Rs)", min: 4, max: 6 },
+    { k: "platinum", l: "Platino completo", min: 12, max: 16 },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 3, note: "Sin trofeos perdibles, sin grind y sin online. Solo hay que limpiar el mapa." },
+    { k: "story", l: "Historia", s: 3, note: "Los jefes tienen fases complicadas pero se puede fallar sin perder progreso." },
+    { k: "normal", l: "Normal", s: 3 },
+    { k: "hard", l: "Dificil", s: 5 },
+  ],
+  profile: {
+    total: 42,
+    gold: 13,
+    silver: 12,
+    bronze: 16,
+    hMin: 12,
+    hMax: 16,
+    runsMin: 1,
+    runsMax: 1,
+    grind: 1,
+    missables: false,
+    online: false,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno. Todos los Trofeos de Zurkon se pueden repetir en el menus de la Dimension A.",
+    onlineNote: "Ninguno. El juego es completamente offline.",
+  quick: "De los platinos mas rapidos del catalogo: historia de 6-8 horas mas una tarde de limpieza de Zurkon y Rs.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS5",
+    shared: false,
+    completeness: "parcial",
+    notes: "42 trofeos. Se documentan los principales.",
+    trophies: [
+      { n: "Rift Breaker", k: "platinum", h: "Consigue todos los demas trofeos de Rift Apart.", d: 5, s: "Al final de todo el proceso" },
+      { n: "Zur-tron", k: "gold", h: "Supera los cinco retos de combate de Trofeos de Zurkon.", d: 6 },
+      { n: "Tough Test", k: "gold", h: "Completa el recorrido de obstaculos de la Dimension B sin fallar.", d: 4 },
+      { n: "Aperphero", k: "gold", h: "Consigue todas las mejoras del traje de Aperphero.", d: 4 },
+      { n: "Wingsuit", k: "gold", h: "Consigue la mochila de vuelo.", d: 3 },
+      { n: "Out of Shape", k: "gold", h: "Supera todos los retos de Relative de la Dimension B.", d: 6 },
+      { n: "Squirel Squad", k: "silver", h: "Consigue a los cinco esbirros en la Dimension A.", d: 4 },
+      { n: "Tinkerbeth's Demise", k: "silver", h: "Derrota a Tinkerbeth.", d: 4 },
+      { n: "Smoke and Mirrors", k: "silver", h: "Derrota al jefe final de la Dimension B.", d: 5 },
+      { n: "Collect-a-Log", k: "bronze", h: "Encuentra el primer Rs.", d: 2 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de Ratchet & Clank: Rift Apart",
+    summary: "Orden recomendado: historia, Dimension B y limpieza de Zurkon y Rs.",
+    steps: [
+      { title: "Termina la Dimension A", body: "Cuatro a cinco horas. El juego deja cambiar de dimension en cualquier momento." },
+      { title: "Avanza en la Dimension B", body: "La segunda dimension es mas vertical y tiene la mayor parte de los trofeos." },
+      { title: "Haz el recorrido de obstaculos", body: "El reto de plataformas da un trofeo de oro. Se puede reintentar ilimitadamente." },
+      { title: "Recoge los Rs", body: "Estan escondidos en Huevos. El juego te avisa con un sonido cuando estas cerca." },
+      { title: "Completa los Trofeos de Zurkon", body: "Se reintenta desde el menu de la Dimension A. No hace falta volver a la partida." },
+      { title: "Mejora los dos trajes", body: "Las mejoras del traje de Ratchet dan dos trofeos de oro. Se compran con los Rs." },
+      { title: "Consigue el Platino", body: "Con la lista completa, Rift Breaker cae solo." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/ratchet-clank-rift-apart-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};

@@ -1,0 +1,96 @@
+import type { GameSeed } from "./types";
+
+/** Horizon Zero Dawn (2017) - PS4 */
+export const HORIZON_ZERO_DAWN: GameSeed = {
+  slug: "horizon-zero-dawn",
+  title: "Horizon Zero Dawn",
+  tagline: "Cazadora en un futuro dominado por maquinas",
+  summary:
+    "Aloy despierta en un mundo postapocaliptico donde la humanidad ha vuelto a una vida tribal frente a criaturas mecanicas.",
+  description:
+    "Mundo abierto con una campana de unas 12 horas y un bestiario amplio. Salio para PS4; en PS5 solo es jugable la parte inicial de Northern Light, con su propia lista de trofeos. No tiene multijugador online.",
+  dev: "guerrilla-games",
+  pub: "sony-interactive",
+  date: "2017-02-28",
+  color: "#22d3ee",
+  url: "https://www.playstation.com/es-es/games/horizon-zero-dawn/",
+  pop: 940,
+  platforms: [
+    {
+      slug: "ps4",
+      date: "2017-02-28",
+      original: true,
+      notes: "Version completa. El prologue Northern Light de PS5 tiene lista de trofeos aparte.",
+    },
+  ],
+  categories: [
+    { slug: "accion", primary: true },
+    { slug: "mundo-abierto" },
+    { slug: "rpg" },
+  ],
+  times: [
+    { k: "main_story", l: "Historia principal", min: 10, max: 12 },
+    { k: "story_side", l: "Historia + secundarias", min: 20, max: 26 },
+    { k: "side_content", l: "Contenido secundario (bausas y Relative)", min: 8, max: 12 },
+    { k: "platinum", l: "Platino completo", min: 30, max: 40 },
+  ],
+  difficulties: [
+    { k: "platinum", l: "Platino", s: 6, note: "Los bausas pueden ser laboriosos si no se sabe donde buscar." },
+    { k: "story", l: "Historia", s: 4 },
+    { k: "normal", l: "Normal", s: 4 },
+    { k: "hard", l: "Dificil", s: 6 },
+  ],
+  profile: {
+    total: 32,
+    gold: 10,
+    silver: 9,
+    bronze: 12,
+    hMin: 30,
+    hMax: 40,
+    runsMin: 1,
+    runsMax: 1,
+    grind: 3,
+    missables: false,
+    online: false,
+    collectibles: true,
+    afterEnding: true,
+    missableNote: "Ninguno. Ninguna decision bloquea trofeos posteriores.",
+    onlineNote: "Ninguno. El juego no tiene multijugador online en PS4.",
+    quick: "Platino de exploracion: historia, cazas de maquinas y bausas. La parte mas laboriosa es conseguir recursos para las flechas antiguas.",
+    source: "psnprofiles",
+  },
+  list: {
+    name: "Lista de trofeos PS4",
+    shared: false,
+    completeness: "parcial",
+    notes: "32 trofeos. El prologue Northern Light de PS5 tiene su propia lista.",
+    trophies: [
+      { n: "T Tracker", k: "platinum", h: "Consigue todos los demas trofeos de Horizon Zero Dawn.", d: 8, s: "Al final de todo el proceso" },
+      { n: "Blood Caller", k: "gold", h: "Completa la historia principal de Aloy.", d: 4 },
+      { n: "The Womb of the Mountain", k: "gold", h: "Derrota a la maquina que protege la zona del Prior.", d: 5 },
+      { n: "Death from the Skies", k: "gold", h: "Usa el Tallneck para derribar a una maquina desde el aire.", d: 4 },
+      { n: "The Cache", k: "gold", h: "Encuentra la Relative cacheada delева noratlantica.", d: 3 },
+      { n: "Firebreak", k: "gold", h: "Rescata a la resistencia en el Firebreak.", d: 3 },
+      { n: "The City of the Sun", k: "gold", h: "Llega a la ciudad de Meridian.", d: 3 },
+      { n: "Hunter's Journey", k: "gold", h: "Consigue todas las piezas de la armadura de hunter.", d: 5 },
+      { n: "A Seeker at Night", k: "silver", h: "Completa la vision de Aloy durante la noche.", d: 3 },
+    ],
+  },
+  guide: {
+    title: "Guia de platino de Horizon Zero Dawn",
+    summary: "Orden recomendado para la lista completa sin perdibles ni grind pesado.",
+    steps: [
+      { title: "Termina la historia", body: "Diez a doce horas. Los bausas se pueden hacer antes o despues sin perder ningun trofeo." },
+      { title: "Haz las cazas de maquinas", body: "Dan equipo y experiencia. Se pueden repetir cuantas veces quieras." },
+      { title: "Haz los bausas", body: "Los bausas dan varias piezas de la armadura de hunter. Son el paso mas laborioso." },
+      { title: "Consigue el equipo de hunter", body: "Las piezas de armadura y armas estan repartidas por bausas y Relative." },
+      { title: "Termina las Relative", body: "Las Relative de campfire dan el resto de objetos de la lista." },
+      { title: "Consigue el Platino", body: "Con la lista completa, T Tracker cae solo." },
+    ],
+  },
+  sources: [
+    { slug: "psnprofiles", url: "https://psnprofiles.com/games/horizon-zero-dawn-trophies", scope: "Lista y recuento de trofeos", confidence: "alta" },
+    { slug: "playstation-blog", url: "https://blog.playstation.com", scope: "Disponibilidad y plataformas", confidence: "alta" },
+    { slug: "comunidad-guias", url: "https://www.google.com", scope: "Tiempos orientativos", confidence: "media" },
+  ],
+};
