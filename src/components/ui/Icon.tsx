@@ -350,6 +350,80 @@ export const IconMapPin = (p: IconProps) => (
   </Base>
 );
 
+// ===========================================================================
+// Iconos de la comunidad
+// ===========================================================================
+
+/** Hablar en general: foro. */
+export const IconChat = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M20.5 12.5c0 3.9-3.8 7-8.5 7-1 0-2-.14-2.9-.4L4 20.5l1.6-3.9A6.6 6.6 0 0 1 3.5 12.5C3.5 8.6 7.3 5.5 12 5.5s8.5 3.1 8.5 7Z" />
+  </Base>
+);
+
+/** Una sola línea de diálogo: comentario. */
+export const IconMessage = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 5.5h16v11H9l-5 4v-15Z" />
+    <path d="M8 9.5h8M8 13h5" />
+  </Base>
+);
+
+/** Corazón: voto positivo. */
+export const IconHeart = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 20s-7.5-4.6-7.5-9.6A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5-7.5 9.6-7.5 9.6Z" />
+  </Base>
+);
+
+/** Chincheta: post fijado por un moderador. */
+export const IconPin = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M9 4h6l-.7 5.2 2.7 2.6V14H7v-2.2l2.7-2.6L9 4Z" />
+    <path d="M12 14v6" />
+  </Base>
+);
+
+/** Bandera: denunciar. */
+export const IconFlag = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6 21V4.5" />
+    <path d="M6 5.5h10.5l-1.7 3.5 1.7 3.5H6" />
+  </Base>
+);
+
+/** Avión de papel: enviar. */
+export const IconSend = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M20.5 3.5 3.5 10.2l7 2.8 2.8 7 7.2-16.5Z" />
+  </Base>
+);
+
+/** Ojo: visitas. */
+export const IconEye = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </Base>
+);
+
+/** Burbuja con interrogación: pregunta. */
+export const IconQuestion = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 6.5h16v9H12l-4.5 3.5v-3.5H4v-9Z" />
+    <path d="M9.7 9.3a2.3 2.3 0 1 1 2.8 2.3v1" />
+    <path d="M12.5 14.2h.01" />
+  </Base>
+);
+
+/** Burbuja con estrella: opinión. */
+export const IconQuote = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 6.5h16v9H12l-4.5 3.5v-3.5H4v-9Z" />
+    <path d="M9.5 9.5h5M9.5 12.3h3" />
+  </Base>
+);
+
 /** Icono de trofeo por tipo: forma distinta para platino/oro/plata/bronce. */
 export function TrophyIcon({ type, size = 18 }: { type: string; size?: number }) {
   const colors: Record<string, string> = {

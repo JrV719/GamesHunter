@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/guias`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/comparar`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/categorias`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE}/comunidad`, lastModified: now, changeFrequency: "hourly", priority: 0.7 },
     { url: `${BASE}/acerca-de`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     ...games.map((g) => ({
       url: `${BASE}/juegos/${g.slug}`,

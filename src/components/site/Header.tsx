@@ -4,7 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { IconMenu, IconX, IconUser, IconLogout, IconSettings, IconTrophy } from "@/components/ui/Icon";
+import {
+  IconMenu,
+  IconUser,
+  IconLogout,
+  IconSettings,
+  IconTrophy,
+} from "@/components/ui/Icon";
 
 export type HeaderUser = {
   username: string;
@@ -17,6 +23,7 @@ const NAV = [
   { href: "/comparar", label: "Comparar" },
   { href: "/guias", label: "Guías" },
   { href: "/categorias", label: "Categorías" },
+  { href: "/comunidad", label: "Comunidad" },
 ];
 
 export function Header({ user }: { user: HeaderUser }) {

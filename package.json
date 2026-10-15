@@ -14,6 +14,7 @@
     "db:push": "node scripts/db-push.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "node scripts/db-push.mjs --reset",
+    "db:export": "node scripts/db-export.mjs",
     "setup": "npm run db:push && npm run db:seed",
     "smoke": "node scripts/smoke.mjs"
   },

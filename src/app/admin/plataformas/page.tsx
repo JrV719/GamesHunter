@@ -3,10 +3,12 @@ import { all, run, one } from "@/lib/db";
 import { newId } from "@/lib/queries/guides";
 import { slugify } from "@/lib/utils";
 import { IconPlus, IconTrash, IconEdit } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Administrar plataformas", robots: { index: false } };
 
 export default async function AdminPlatformsPage() {
+  await requireAdmin();
   const platforms = await all<{
     id: string;
     slug: string;
@@ -21,6 +23,7 @@ export default async function AdminPlatformsPage() {
 
   async function createPlatform(formData: FormData) {
     "use server";
+    await requireAdmin();
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
     await run("INSERT INTO platforms (id, slug, name, short_name, sort_order) VALUES (?, ?, ?, ?, ?)", [
@@ -35,6 +38,7 @@ export default async function AdminPlatformsPage() {
 
   async function updatePlatform(formData: FormData) {
     "use server";
+    await requireAdmin();
     await run(
       "UPDATE platforms SET name = ?, short_name = ?, sort_order = ? WHERE id = ?",
       [
@@ -49,6 +53,7 @@ export default async function AdminPlatformsPage() {
 
   async function deletePlatform(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     const used = await one<{ n: number }>("SELECT COUNT(*) AS n FROM game_platforms WHERE platform_id = ?", [
       id,

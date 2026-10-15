@@ -420,6 +420,72 @@ for (const raw of GAMES) {
   console.log(`  · ${g.title}`);
 }
 
+// --- Temas del foro ---------------------------------------------------------
+// Son contenido de la aplicación, no datos editoriales: se siembran siempre,
+// incluso con SEED_DEMO_DATA=false, para que la comunidad arranque usable.
+const TOPICS = [
+  {
+    slug: "platinos",
+    name: "Platinos",
+    description: "Cómo se sacan los platinos: rutas, tiempos y estrategias.",
+    accent: "#7dd3fc",
+    sortOrder: 10,
+  },
+  {
+    slug: "trofeos",
+    name: "Trofeos",
+    description: "Dudas y métodos sobre trofeos concretos.",
+    accent: "#fbbf24",
+    sortOrder: 20,
+  },
+  {
+    slug: "dificultad-y-tiempos",
+    name: "Dificultad y tiempos",
+    description: "Cuánto cuesta cada platino y qué dificultad tiene de verdad.",
+    accent: "#fb7185",
+    sortOrder: 30,
+  },
+  {
+    slug: "consejos",
+    name: "Consejos",
+    description: "Trucos, rutas y atajos que ahorran horas.",
+    accent: "#34d399",
+    sortOrder: 40,
+  },
+  {
+    slug: "online-y-cooperativo",
+    name: "Online y cooperativo",
+    description: "Trofeos con conexión, servidores y juego cooperativo.",
+    accent: "#a78bfa",
+    sortOrder: 50,
+  },
+  {
+    slug: "noticias",
+    name: "Noticias",
+    description: "Novedades de la plataforma y de los juegos catalogados.",
+    accent: "#38bdf8",
+    sortOrder: 60,
+  },
+  {
+    slug: "general",
+    name: "General",
+    description: "Cualquier otro tema relacionado con los juegos.",
+    accent: "#8fa0ba",
+    sortOrder: 70,
+  },
+];
+for (const t of TOPICS) {
+  db.prepare(
+    `INSERT INTO topics (id, slug, name, description, accent, sort_order, is_active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+     ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description,
+       accent = excluded.accent, sort_order = excluded.sort_order, is_active = 1`,
+  ).run(newId("topic"), t.slug, t.name, t.description, t.accent, t.sortOrder, now());
+}
+const topicIdBySlug = new Map(
+  db.prepare("SELECT id, slug FROM topics").all().map((r: any) => [r.slug, r.id]),
+);
+
 // --- Usuario administrador -------------------------------------------------
 const email = (process.env.ADMIN_EMAIL ?? "admin@gameshunter.app").toLowerCase();
 const password = process.env.ADMIN_PASSWORD ?? "gameshunter";
@@ -444,6 +510,7 @@ console.log(`  juegos:       ${GAMES.length}`);
 console.log(`  guias:        ${guideCount}`);
 console.log(`  trofeos:      ${trophyCount}`);
 console.log(`  procedencia:  ${provCount} registros`);
+console.log(`  temas foro:   ${topicIdBySlug.size}`);
 console.log(`\n  Admin: ${email} / ${password}`);
 console.log("  Listo.\n");
 db.close();

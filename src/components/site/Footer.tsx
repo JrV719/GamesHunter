@@ -21,10 +21,19 @@ const SECTIONS = [
     ],
   },
   {
+    title: "Comunidad",
+    links: [
+      { href: "/comunidad", label: "Foro de la comunidad" },
+      { href: "/comunidad?nuevo=1", label: "Publicar" },
+      { href: "/comunidad?tipo=opinion", label: "Opiniones de juegos" },
+      { href: "/comunidad?tema=consejos", label: "Consejos y rutas" },
+    ],
+  },
+  {
     title: "Sitio",
     links: [
       { href: "/acerca-de", label: "Acerca de y fuentes" },
-      { href: "/panel-admin", label: "Panel de administración" },
+      { href: "/admin", label: "Panel de administración" },
       { href: "/login", label: "Iniciar sesión" },
       { href: "/registro", label: "Crear cuenta" },
     ],

@@ -29,7 +29,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </span>
         </div>
         <p className="mt-1.5 text-sm text-base-400">
-          Gestiona juegos, trofeos, guías, fuentes, plataformas y categorías sin tocar el código.
+          Gestiona juegos, trofeos, guías, comunidad, fuentes, plataformas y categorías sin tocar el
+          código.
         </p>
       </header>
 
@@ -45,6 +46,7 @@ const NAV = [
   { href: "/admin/juegos", label: "Juegos" },
   { href: "/admin/trofeos", label: "Trofeos" },
   { href: "/admin/guias", label: "Guías" },
+  { href: "/admin/comunidad", label: "Comunidad" },
   { href: "/admin/fuentes", label: "Fuentes" },
   { href: "/admin/categorias", label: "Categorías" },
   { href: "/admin/plataformas", label: "Plataformas" },

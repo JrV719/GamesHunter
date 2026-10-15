@@ -92,9 +92,14 @@ export function GameForm({
               className="gh-input"
             >
               <option value="draft">Borrador</option>
+              <option value="upcoming">Próximamente</option>
               <option value="published">Publicado</option>
               <option value="archived">Archivado</option>
             </select>
+            <p className="mt-1 text-[10px] leading-relaxed text-base-500">
+              Sólo «Publicado» aparece en el catálogo, la búsqueda y el sitemap. «Próximamente» deja el
+              juego preparado pero sin mostrarlo al público.
+            </p>
           </div>
           <div>
             <label htmlFor="dataStatus" className="gh-label">

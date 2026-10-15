@@ -167,3 +167,124 @@ export const GAMEPLAY_DIFFICULTIES = [
   "Muy difícil",
   "Máxima dificultad",
 ] as const;
+
+// ===========================================================================
+// Estado editorial de un juego
+// ===========================================================================
+
+/**
+ * `upcoming` = «Próximamente». Es un estado editorial más, no un dato del
+ * juego: el juego existe en la base (para poder preparar su ficha) pero no
+ * aparece en el catálogo público ni en el sitemap hasta pasar a `published`.
+ */
+export const GAME_STATUSES = ["draft", "upcoming", "published", "archived"] as const;
+export type GameStatus = (typeof GAME_STATUSES)[number];
+
+export const GAME_STATUS_LABELS: Record<GameStatus, string> = {
+  draft: "Borrador",
+  upcoming: "Próximamente",
+  published: "Publicado",
+  archived: "Archivado",
+};
+
+export const GAME_STATUS_META: Record<
+  GameStatus,
+  { label: string; className: string; public: boolean }
+> = {
+  draft: {
+    label: "Borrador",
+    className: "border-base-600 bg-base-800 text-base-400",
+    public: false,
+  },
+  upcoming: {
+    label: "Próximamente",
+    className: "border-sky-500/30 bg-sky-500/10 text-sky-300",
+    public: false,
+  },
+  published: {
+    label: "Publicado",
+    className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+    public: true,
+  },
+  archived: {
+    label: "Archivado",
+    className: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    public: false,
+  },
+};
+
+// ===========================================================================
+// Comunidad: foro, opiniones y comentarios
+// ===========================================================================
+
+/**
+ * `opinion` son las opiniones sobre un juego: aparecen también en su ficha.
+ * El resto son hilos del foro, que pueden asociarse a un juego o no.
+ */
+export const POST_KINDS = ["post", "opinion", "question", "tip"] as const;
+export type PostKind = (typeof POST_KINDS)[number];
+
+export const POST_KIND_LABELS: Record<PostKind, string> = {
+  post: "Publicación",
+  opinion: "Opinión",
+  question: "Pregunta",
+  tip: "Consejo",
+};
+
+/**
+ * `published` visible para todos. `hidden` solo lo ven moderadores y
+ * administradores (se usa desde «moderar»). Nunca se borra físicamente: así
+ * las respuestas huérfanas conservan el hilo y siempre hay trazabilidad.
+ */
+export const COMMUNITY_STATUSES = ["published", "hidden"] as const;
+export type CommunityStatus = (typeof COMMUNITY_STATUSES)[number];
+
+export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
+  published: "Publicado",
+  hidden: "Oculto",
+};
+
+export const REPORT_REASONS = [
+  "spam",
+  "insulto",
+  "spoiler",
+  "info-falsa",
+  "otro",
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+  spam: "Spam o publicidad",
+  insulto: "Lenguaje ofensivo",
+  spoiler: "Spoiler sin avisar",
+  "info-falsa": "Información incorrecta",
+  otro: "Otro motivo",
+};
+
+export const POST_SORTS = [
+  "recientes",
+  "populares",
+  "comentados",
+  "sin-respuesta",
+] as const;
+export type PostSort = (typeof POST_SORTS)[number];
+
+export const POST_SORT_LABELS: Record<PostSort, string> = {
+  recientes: "Más recientes",
+  populares: "Más votados",
+  comentados: "Más comentados",
+  "sin-respuesta": "Sin respuesta",
+};
+
+export const COMMUNITY_PAGE_SIZE = 12;
+
+/** Límites de longitud. Se validan en el servidor, no solo en el formulario. */
+export const COMMUNITY_LIMITS = {
+  postTitleMin: 4,
+  postTitleMax: 140,
+  postBodyMin: 20,
+  postBodyMax: 8000,
+  commentMin: 2,
+  commentMax: 4000,
+  profileBioMax: 400,
+} as const;

@@ -7,12 +7,16 @@ import { newId } from "@/lib/queries/guides";
 import { getPlatforms, getCategories, getDevelopers } from "@/lib/queries/taxonomy";
 import { IconPlus, IconSearch, IconEdit, IconTrash } from "@/components/ui/Icon";
 import { GameForm } from "@/components/admin/GameForm";
+import { requireAdmin } from "@/lib/permissions";
+import { GAME_STATUS_LABELS, GAME_STATUS_META, type GameStatus } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Administrar juegos", robots: { index: false } };
 
 type SearchParams = Promise<{ q?: string; nuevo?: string; edit?: string }>;
 
 export default async function AdminGamesPage({ searchParams }: { searchParams: SearchParams }) {
+  await requireAdmin();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
 
@@ -67,6 +71,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
   // --- Crear juego
   async function createGame(formData: FormData) {
     "use server";
+    await requireAdmin();
     const title = String(formData.get("title") ?? "").trim();
     if (!title) redirect("/admin/juegos?nuevo=1&error=Titulo+obligatorio");
     const slug = await uniqueGameSlug(title);
@@ -136,6 +141,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
   // --- Actualizar juego
   async function updateGame(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     const title = String(formData.get("title") ?? "").trim();
     const developerId = String(formData.get("developerId") ?? "");
@@ -199,6 +205,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
   // --- Borrar juego
   async function deleteGame(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     await run("DELETE FROM games WHERE id = ?", [id]);
     revalidatePath("/admin/juegos");
@@ -336,13 +343,12 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
                 <td className="px-4 py-2.5 font-mono text-base-200">{g.totalTrophies ?? "—"}</td>
                 <td className="px-4 py-2.5">
                   <span
-                    className={`gh-chip ${
-                      g.status === "published"
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                        : "border-base-600 bg-base-800 text-base-400"
-                    }`}
+                    className={cn(
+                      "gh-chip",
+                      GAME_STATUS_META[g.status as GameStatus]?.className,
+                    )}
                   >
-                    {g.status}
+                    {GAME_STATUS_LABELS[g.status as GameStatus] ?? g.status}
                   </span>
                 </td>
                 <td className="px-4 py-2.5 text-[11px] text-base-400">{g.dataStatus}</td>

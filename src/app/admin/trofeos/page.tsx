@@ -6,12 +6,14 @@ import { newId } from "@/lib/queries/guides";
 import { getSources } from "@/lib/queries/taxonomy";
 import { TROPHY_TYPES, TROPHY_TYPE_LABELS, type TrophyType } from "@/lib/constants";
 import { IconPlus, IconTrash, IconSearch } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Administrar trofeos", robots: { index: false } };
 
 type SearchParams = Promise<{ juego?: string; q?: string }>;
 
 export default async function AdminTrophiesPage({ searchParams }: { searchParams: SearchParams }) {
+  await requireAdmin();
   const sp = await searchParams;
   const sources = await getSources();
 
@@ -46,6 +48,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
 
   async function addTrophy(formData: FormData) {
     "use server";
+    await requireAdmin();
     const gameId = String(formData.get("gameId") ?? "");
     const listId = (
       await one<{ id: string }>(
@@ -109,6 +112,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
 
   async function updateTrophy(formData: FormData) {
     "use server";
+    await requireAdmin();
     const gtId = String(formData.get("gtId") ?? "");
     const name = String(formData.get("name") ?? "").trim();
     await run(
@@ -138,6 +142,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
 
   async function deleteTrophy(formData: FormData) {
     "use server";
+    await requireAdmin();
     const gtId = String(formData.get("gtId") ?? "");
     const gameId = String(formData.get("gameId") ?? "");
     // Primero el trofeo: el ON DELETE CASCADE de game_trophies borra la fila

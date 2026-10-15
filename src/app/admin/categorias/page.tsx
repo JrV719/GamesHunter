@@ -3,10 +3,12 @@ import { all, run } from "@/lib/db";
 import { newId } from "@/lib/queries/guides";
 import { slugify } from "@/lib/utils";
 import { IconPlus, IconTrash, IconEdit } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Administrar categorías", robots: { index: false } };
 
 export default async function AdminCategoriesPage() {
+  await requireAdmin();
   const categories = await all<{
     id: string;
     slug: string;
@@ -22,6 +24,7 @@ export default async function AdminCategoriesPage() {
 
   async function createCategory(formData: FormData) {
     "use server";
+    await requireAdmin();
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
     await run(
@@ -41,6 +44,7 @@ export default async function AdminCategoriesPage() {
 
   async function updateCategory(formData: FormData) {
     "use server";
+    await requireAdmin();
     await run(
       "UPDATE categories SET name = ?, description = ?, icon = ?, sort_order = ? WHERE id = ?",
       [
@@ -57,6 +61,7 @@ export default async function AdminCategoriesPage() {
 
   async function deleteCategory(formData: FormData) {
     "use server";
+    await requireAdmin();
     await run("DELETE FROM categories WHERE id = ?", [String(formData.get("id") ?? "")]);
     revalidatePath("/admin/categorias");
     revalidatePath("/categorias");

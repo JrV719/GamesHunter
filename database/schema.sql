@@ -505,3 +505,153 @@ CREATE INDEX IF NOT EXISTS "users_role_idx" ON "users"("role");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "users_username_key" ON "users"("username");
 
+CREATE INDEX IF NOT EXISTS "games_status_idx" ON "games"("status");
+
+-- ===========================================================================
+-- COMUNIDAD
+-- ===========================================================================
+-- Foro, opiniones y comentarios.
+--
+-- Todo lo de la comunidad se añadió como tablas nuevas, sin un solo ALTER
+-- TABLE: `db:push` migra una base ya existente sin perder datos porque todo
+-- el bloque es idempotente (IF NOT EXISTS).
+
+-- Temas del foro. Un post puede llevar un tema y, además, asociarse a un juego.
+CREATE TABLE IF NOT EXISTS "topics" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "slug" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "icon" TEXT,
+    "accent" TEXT NOT NULL DEFAULT '#38bdf8',
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "is_active" INTEGER NOT NULL DEFAULT true,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Publicaciones. `kind = 'opinion'` alimenta la sección «Opiniones de la
+-- comunidad» de la ficha de cada juego; el resto son hilos del foro.
+CREATE TABLE IF NOT EXISTS "posts" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "user_id" TEXT NOT NULL,
+    "game_id" TEXT,
+    "topic_id" TEXT,
+    "kind" TEXT NOT NULL DEFAULT 'post',
+    "title" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'published',
+    "is_pinned" INTEGER NOT NULL DEFAULT false,
+    "comments_count" INTEGER NOT NULL DEFAULT 0,
+    "views_count" INTEGER NOT NULL DEFAULT 0,
+    "votes_count" INTEGER NOT NULL DEFAULT 0,
+    "rating_difficulty" INTEGER,
+    "rating_hours" REAL,
+    "rating_overall" INTEGER,
+    "moderation_note" TEXT,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TEXT NOT NULL,
+    "edited_at" TEXT,
+    "last_activity_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "posts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "posts_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "games" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "posts_topic_id_fkey" FOREIGN KEY ("topic_id") REFERENCES "topics" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- Comentarios. `parent_id` permite una respuesta anidada (niveles 0 y 1).
+CREATE TABLE IF NOT EXISTS "comments" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "post_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "parent_id" TEXT,
+    "body" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'published',
+    "depth" INTEGER NOT NULL DEFAULT 0,
+    "votes_count" INTEGER NOT NULL DEFAULT 0,
+    "moderation_note" TEXT,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TEXT NOT NULL,
+    "edited_at" TEXT,
+    CONSTRAINT "comments_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "comments_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "comments" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "post_votes" (
+    "post_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ("post_id", "user_id"),
+    CONSTRAINT "post_votes_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "post_votes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "comment_votes" (
+    "comment_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ("comment_id", "user_id"),
+    CONSTRAINT "comment_votes_comment_id_fkey" FOREIGN KEY ("comment_id") REFERENCES "comments" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "comment_votes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Denuncias de moderación, sobre publicaciones o sobre comentarios.
+CREATE TABLE IF NOT EXISTS "reports" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "reporter_id" TEXT,
+    "target_type" TEXT NOT NULL,
+    "target_id" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "details" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'open',
+    "resolved_by" TEXT,
+    "resolution_note" TEXT,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "resolved_at" TEXT,
+    CONSTRAINT "reports_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "reports_resolved_by_fkey" FOREIGN KEY ("resolved_by") REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- Historial de actividad: lo que un administrador puede consultar de un usuario.
+CREATE TABLE IF NOT EXISTS "activity_log" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "user_id" TEXT,
+    "action" TEXT NOT NULL,
+    "entity_type" TEXT,
+    "entity_id" TEXT,
+    "summary" TEXT,
+    "ip" TEXT,
+    "created_at" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===========================================================================
+-- INDICES DE LA COMUNIDAD
+-- ===========================================================================
+
+CREATE UNIQUE INDEX IF NOT EXISTS "topics_slug_key" ON "topics"("slug");
+
+CREATE INDEX IF NOT EXISTS "topics_sort_order_idx" ON "topics"("sort_order");
+
+CREATE INDEX IF NOT EXISTS "posts_status_created_at_idx" ON "posts"("status", "created_at");
+
+CREATE INDEX IF NOT EXISTS "posts_user_id_idx" ON "posts"("user_id");
+
+CREATE INDEX IF NOT EXISTS "posts_game_id_idx" ON "posts"("game_id");
+
+CREATE INDEX IF NOT EXISTS "posts_topic_id_idx" ON "posts"("topic_id");
+
+CREATE INDEX IF NOT EXISTS "posts_game_kind_idx" ON "posts"("game_id", "kind", "status");
+
+CREATE INDEX IF NOT EXISTS "comments_post_id_idx" ON "comments"("post_id");
+
+CREATE INDEX IF NOT EXISTS "comments_user_id_idx" ON "comments"("user_id");
+
+CREATE INDEX IF NOT EXISTS "comments_parent_id_idx" ON "comments"("parent_id");
+
+CREATE INDEX IF NOT EXISTS "reports_status_created_at_idx" ON "reports"("status", "created_at");
+
+CREATE INDEX IF NOT EXISTS "reports_target_idx" ON "reports"("target_type", "target_id");
+
+CREATE INDEX IF NOT EXISTS "activity_log_user_id_idx" ON "activity_log"("user_id", "created_at");
+
+CREATE INDEX IF NOT EXISTS "activity_log_created_at_idx" ON "activity_log"("created_at");
+

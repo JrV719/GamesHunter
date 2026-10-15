@@ -3,6 +3,7 @@ import { all, one, run, runMany, type SqlParam } from "@/lib/db";
 import { newId } from "@/lib/queries/guides";
 import { slugify } from "@/lib/utils";
 import { IconPlus, IconTrash, IconEdit, IconExternal } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Administrar fuentes", robots: { index: false } };
 
@@ -14,6 +15,7 @@ const POLICIES = [
 ];
 
 export default async function AdminSourcesPage() {
+  await requireAdmin();
   const sources = await all<{
     id: string;
     slug: string;
@@ -32,6 +34,7 @@ export default async function AdminSourcesPage() {
 
   async function createSource(formData: FormData) {
     "use server";
+    await requireAdmin();
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
     const slug = slugify(name);
@@ -55,6 +58,7 @@ export default async function AdminSourcesPage() {
 
   async function updateSource(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     await run(
       `UPDATE guide_sources SET name = ?, homepage = ?, usage_policy = ?, allows_copy = ?,
@@ -76,6 +80,7 @@ export default async function AdminSourcesPage() {
 
   async function deleteSource(formData: FormData) {
     "use server";
+    await requireAdmin();
     await run("DELETE FROM guide_sources WHERE id = ?", [String(formData.get("id") ?? "")]);
     revalidatePath("/admin/fuentes");
   }

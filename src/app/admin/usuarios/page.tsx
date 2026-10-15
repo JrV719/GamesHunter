@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { listUsers, setUserRole, setUserStatus } from "@/lib/auth";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/permissions";
 import { formatDate } from "@/lib/utils";
 import { IconUsers } from "@/components/ui/Icon";
 import { USER_ROLES } from "@/lib/constants";
@@ -8,22 +9,31 @@ import { USER_ROLES } from "@/lib/constants";
 export const metadata = { title: "Administrar usuarios", robots: { index: false } };
 
 export default async function AdminUsersPage() {
-  const [users, me] = await Promise.all([listUsers(), getCurrentUser()]);
+  const me = await requireAdmin();
+  const users = await listUsers();
 
   async function changeRole(formData: FormData) {
     "use server";
+    // La comprobación va DENTRO de la acción, no solo en el layout: una Server
+    // Action es un endpoint público y cualquiera puede invocarla con un POST.
+    const admin = await requireAdmin();
     const id = String(formData.get("id") ?? "");
     const role = String(formData.get("role") ?? "user");
-    if (id === me?.id && role !== "admin") return; // evita quedarse fuera del panel
-    setUserRole(id, role);
+    if (!USER_ROLES.includes(role as (typeof USER_ROLES)[number])) return;
+    // Evita quedarse fuera del panel por error propio.
+    if (id === admin.id && role !== "admin") return;
+    await setUserRole(id, role);
     revalidatePath("/admin/usuarios");
   }
 
   async function changeStatus(formData: FormData) {
     "use server";
+    const admin = await requireAdmin();
     const id = String(formData.get("id") ?? "");
-    if (id === me?.id) return;
-    setUserStatus(id, String(formData.get("status") ?? "active"));
+    if (id === admin.id) return;
+    const status = String(formData.get("status") ?? "active");
+    if (!["active", "suspended"].includes(status)) return;
+    await setUserStatus(id, status);
     revalidatePath("/admin/usuarios");
   }
 
@@ -51,12 +61,15 @@ export default async function AdminUsersPage() {
             {users.map((u) => (
               <tr key={u.id} className="transition-colors hover:bg-base-850/50">
                 <td className="px-4 py-2.5">
-                  <p className="font-semibold text-base-100">
+                  <Link
+                    href={`/admin/usuarios/${u.id}`}
+                    className="font-semibold text-base-100 hover:text-accent-300"
+                  >
                     {u.displayName ?? u.username}
                     {u.id === me?.id && (
                       <span className="ml-2 text-[10px] text-accent-300">(tú)</span>
                     )}
-                  </p>
+                  </Link>
                   <p className="text-[11px] text-base-500">@{u.username}</p>
                 </td>
                 <td className="px-4 py-2.5 text-base-300">{u.email}</td>

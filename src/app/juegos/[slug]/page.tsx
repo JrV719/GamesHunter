@@ -14,6 +14,8 @@ import { SectionHeading, Alert, Chip } from "@/components/ui/primitives";
 import { IconAlert, IconGlobe, IconRepeat, IconTarget, IconArrowRight } from "@/components/ui/Icon";
 import { getCurrentUser } from "@/lib/auth";
 import { GameUserActions } from "@/components/game/GameUserActions";
+import { CommunitySection } from "@/components/game/CommunitySection";
+import { isStaff } from "@/lib/permissions";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -217,6 +219,13 @@ export default async function GamePage({ params }: Params) {
           />
           <GuideSection game={game} />
           <SourcesSection game={game} />
+          <CommunitySection
+            gameId={game.id}
+            gameSlug={game.slug}
+            gameTitle={game.title}
+            user={user}
+            viewerIsStaff={isStaff(user)}
+          />
         </div>
 
         {/* Columna lateral */}

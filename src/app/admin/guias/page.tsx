@@ -7,12 +7,14 @@ import { getSources } from "@/lib/queries/taxonomy";
 import { GUIDE_KINDS, GUIDE_KIND_LABELS, type GuideKind } from "@/lib/constants";
 import { IconEdit, IconTrash, IconPlus, IconExternal } from "@/components/ui/Icon";
 import { formatDate } from "@/lib/utils";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Administrar guías", robots: { index: false } };
 
 type SearchParams = Promise<{ edit?: string; nuevo?: string }>;
 
 export default async function AdminGuidesPage({ searchParams }: { searchParams: SearchParams }) {
+  await requireAdmin();
   const sp = await searchParams;
   const sources = await getSources();
 
@@ -58,6 +60,7 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
 
   async function saveGuide(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     const title = String(formData.get("title") ?? "").trim();
     const summary = String(formData.get("summary") ?? "").trim();
@@ -109,6 +112,7 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
 
   async function removeGuide(formData: FormData) {
     "use server";
+    await requireAdmin();
     const id = String(formData.get("id") ?? "");
     await deleteGuide(id);
     revalidatePath("/admin/guias");
