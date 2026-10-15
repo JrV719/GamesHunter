@@ -17,3 +17,6 @@ next-env.d.ts
 prisma/*.db
 prisma/*.db-wal
 prisma/*.db-shm
+
+# Volcado generado por `npm run db:export` (contiene datos de la base)
+prisma/export.sql

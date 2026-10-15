@@ -68,14 +68,10 @@ for (const table of tables) {
   const rows = db.prepare(`SELECT * FROM "${table}"`).all();
   if (rows.length === 0) continue;
 
-  const cols = db.prepare(`SELECT * FROM "${table}" LIMIT 0`).all();
-  void cols;
-
   lines.push(`-- ${table} (${rows.length})`);
   const batch = rows.map((row) => {
-    const r = row as Record<string, unknown>;
-    const names = Object.keys(r);
-    const values = names.map((n) => quote(r[n])).join(", ");
+    const names = Object.keys(row);
+    const values = names.map((n) => quote(row[n])).join(", ");
     return `INSERT INTO "${table}" (${names.map((n) => `"${n}"`).join(",")}) VALUES (${values});`;
   });
   lines.push(...batch);
