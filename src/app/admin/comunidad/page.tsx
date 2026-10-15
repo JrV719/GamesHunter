@@ -156,17 +156,24 @@ export default async function AdminCommunityPage({ searchParams }: { searchParam
                 <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-base-700 pt-3">
                   {r.targetType === "post" ? (
                     <>
-                      <PostAction id={r.targetId} action="hide" label="Ocultar" />
-                      <PostAction id={r.targetId} action="delete" label="Eliminar" danger />
+                      <PostAction id={r.targetId} action="hide" label="Ocultar" vista="denuncias" />
+                      <PostAction id={r.targetId} action="delete" label="Eliminar" vista="denuncias" danger />
                     </>
                   ) : (
                     <>
-                      <CommentAction id={r.targetId} postId={r.targetId} action="hide" label="Ocultar" />
+                      <CommentAction
+                        id={r.targetId}
+                        postId={r.targetId}
+                        action="hide"
+                        label="Ocultar"
+                        vista="denuncias"
+                      />
                       <CommentAction
                         id={r.targetId}
                         postId={r.targetId}
                         action="delete"
                         label="Eliminar"
+                        vista="denuncias"
                         danger
                       />
                     </>
@@ -238,14 +245,15 @@ export default async function AdminCommunityPage({ searchParams }: { searchParam
                   <td className="px-4 py-2.5">
                     <div className="flex flex-wrap gap-1.5">
                       {p.status === "published" ? (
-                        <PostAction id={p.id} action="hide" label="Ocultar" small />
+                        <PostAction id={p.id} action="hide" label="Ocultar" vista="publicaciones" small />
                       ) : (
-                        <PostAction id={p.id} action="publish" label="Publicar" small />
+                        <PostAction id={p.id} action="publish" label="Publicar" vista="publicaciones" small />
                       )}
                       <form action={moderatePost}>
                         <input type="hidden" name="id" value={p.id} />
                         <input type="hidden" name="action" value="pin" />
                         <input type="hidden" name="pinned" value={p.isPinned ? "0" : "1"} />
+                        <input type="hidden" name="vista" value="publicaciones" />
                         <button
                           type="submit"
                           className={cn(
@@ -258,7 +266,7 @@ export default async function AdminCommunityPage({ searchParams }: { searchParam
                           <IconPin size={12} /> {p.isPinned ? "Quitar" : "Fijar"}
                         </button>
                       </form>
-                      <PostAction id={p.id} action="delete" label="Eliminar" small danger />
+                      <PostAction id={p.id} action="delete" label="Eliminar" vista="publicaciones" small danger />
                     </div>
                   </td>
                 </tr>
@@ -300,21 +308,30 @@ export default async function AdminCommunityPage({ searchParams }: { searchParam
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-base-700 pt-2.5">
                   {c.status === "published" ? (
-                    <CommentAction id={c.id} postId={c.postId} action="hide" label="Ocultar" small />
-                  ) : (
                     <CommentAction
-                      id={c.id}
-                      postId={c.postId}
-                      action="publish"
-                      label="Publicar"
-                      small
-                    />
-                  )}
+                        id={c.id}
+                        postId={c.postId}
+                        action="hide"
+                        label="Ocultar"
+                        vista="comentarios"
+                        small
+                      />
+                    ) : (
+                      <CommentAction
+                        id={c.id}
+                        postId={c.postId}
+                        action="publish"
+                        label="Publicar"
+                        vista="comentarios"
+                        small
+                      />
+                    )}
                   <CommentAction
                     id={c.id}
                     postId={c.postId}
                     action="delete"
                     label="Eliminar"
+                    vista="comentarios"
                     small
                     danger
                   />
@@ -346,12 +363,14 @@ function PostAction({
   id,
   action,
   label,
+  vista,
   danger,
   small,
 }: {
   id: string;
   action: string;
   label: string;
+  vista: string;
   danger?: boolean;
   small?: boolean;
 }) {
@@ -359,6 +378,7 @@ function PostAction({
     <form action={moderatePost}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="action" value={action} />
+      <input type="hidden" name="vista" value={vista} />
       <button
         type="submit"
         className={cn(
@@ -379,6 +399,7 @@ function CommentAction({
   postId,
   action,
   label,
+  vista,
   danger,
   small,
 }: {
@@ -386,6 +407,7 @@ function CommentAction({
   postId: string;
   action: string;
   label: string;
+  vista: string;
   danger?: boolean;
   small?: boolean;
 }) {
@@ -394,6 +416,7 @@ function CommentAction({
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="postId" value={postId} />
       <input type="hidden" name="action" value={action} />
+      <input type="hidden" name="vista" value={vista} />
       <button
         type="submit"
         className={cn(

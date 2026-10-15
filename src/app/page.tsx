@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SearchBar } from "@/components/search/SearchBar";
 import { GameGrid } from "@/components/game/GameCard";
+import { AccessNotice } from "@/components/site/AccessNotice";
 import { SectionHeading, Chip } from "@/components/ui/primitives";
 import {
   IconSparkle,
@@ -67,6 +69,12 @@ export default async function HomePage() {
 
   return (
     <div className="pb-16">
+      {/* Aviso de acceso denegado. Va en un componente de cliente dentro de
+          Suspense para que la portada siga prerenderizándose: si se leyera
+          searchParams aquí, la página entera pasaría a ser dinámica. */}
+      <Suspense fallback={null}>
+        <AccessNotice />
+      </Suspense>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden border-b border-base-700/60">
         <div

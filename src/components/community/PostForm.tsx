@@ -121,9 +121,22 @@ export function PostForm({
         </p>
       </div>
 
-      {/* Campos propios de una opinión */}
-      {isOpinion && (
-        <fieldset className="rounded-xl border border-base-700 bg-base-850/50 p-4">
+      {/* Notas propias de una opinión.
+
+          Con el selector de tipo visible, el bloque se muestra u oculta según
+          el radio marcado (regla `.gh-kind-only` en globals.css), para que
+          cambiar el tipo no exija JavaScript: esto es un Server Component.
+
+          Al editar una opinión ya existente no hay selector, así que se
+          muestra siempre. */}
+      {(showKind || isOpinion) && (
+        <fieldset
+          className={cn(
+            "rounded-xl border border-base-700 bg-base-850/50 p-4",
+            showKind && "gh-kind-only",
+          )}
+          data-kind="opinion"
+        >
           <legend className="gh-label">Tu experiencia con el platino</legend>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>

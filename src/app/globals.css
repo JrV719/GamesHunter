@@ -278,4 +278,17 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /*
+    Campos que sólo aplican a algunas publicaciones (por ejemplo, las notas
+    de una opinión). Se muestran y ocultan con `:has()` según el tipo elegido
+    en los radios, sin JavaScript: el formulario es un Server Component y no
+    puede mantener estado de cliente.
+  */
+  .gh-kind-only {
+    display: none;
+  }
+  form:has(input[name="kind"][value="opinion"]:checked) .gh-kind-only[data-kind="opinion"] {
+    display: block;
+  }
 }

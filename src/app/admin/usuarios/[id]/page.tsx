@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { one } from "@/lib/db";
-import { requireAdmin } from "@/lib/permissions";
+import { requireAdmin, requireStaff } from "@/lib/permissions";
 import {
   getUserActivity,
   getUserCommunity,
@@ -42,8 +42,10 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export default async function AdminUserPage({ params }: { params: RouteParams }) {
-  const me = await requireAdmin();
+  const me = await requireStaff();
   const { id } = await params;
+  // Moderación: puede consultar la ficha; sólo un administrador la modifica.
+  const canEdit = me.role === "admin";
 
   const user = await one<{
     id: string;
@@ -150,6 +152,13 @@ export default async function AdminUserPage({ params }: { params: RouteParams })
         ))}
       </div>
 
+      {hiddenCount > 0 && (
+        <p className="-mt-4 mb-2 text-[11px] leading-relaxed text-base-500">
+          Las cifras de publicaciones, opiniones y comentarios cuentan sólo lo visible para el
+          público. Más abajo se listan también las publicaciones y comentarios ocultos por moderación.
+        </p>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-6">
           {/* Publicaciones */}
@@ -242,51 +251,60 @@ export default async function AdminUserPage({ params }: { params: RouteParams })
           <div className="gh-card space-y-4 p-4">
             <h2 className="gh-section-title">Gestión de la cuenta</h2>
 
-            <form action={changeRole} className="space-y-1.5">
-              <label className="gh-label" htmlFor="role">
-                Rol
-              </label>
-              <input type="hidden" name="id" value={user.id} />
-              <div className="flex gap-2">
-                <select id="role" name="role" defaultValue={user.role} className="gh-input text-xs">
-                  {USER_ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r === "user" ? "Usuario" : r === "moderator" ? "Moderador" : "Administrador"}
-                    </option>
-                  ))}
-                </select>
-                <button type="submit" className="gh-btn gh-btn-ghost text-[11px]">
-                  Guardar
-                </button>
-              </div>
-              <p className="text-[11px] text-base-500">
-                Los moderadores gestionan la comunidad. Sólo los administradores cambian juegos,
-                guías o usuarios.
+            {!canEdit ? (
+              <p className="text-[12px] leading-relaxed text-base-400">
+                Puedes consultar esta ficha, pero sólo un administrador puede cambiar el rol o el
+                estado de la cuenta.
               </p>
-            </form>
+            ) : (
+              <>
+                <form action={changeRole} className="space-y-1.5">
+                  <label className="gh-label" htmlFor="role">
+                    Rol
+                  </label>
+                  <input type="hidden" name="id" value={user.id} />
+                  <div className="flex gap-2">
+                    <select id="role" name="role" defaultValue={user.role} className="gh-input text-xs">
+                      {USER_ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {r === "user" ? "Usuario" : r === "moderator" ? "Moderador" : "Administrador"}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit" className="gh-btn gh-btn-ghost text-[11px]">
+                      Guardar
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-base-500">
+                    Los moderadores gestionan la comunidad. Sólo los administradores cambian juegos,
+                    guías o usuarios.
+                  </p>
+                </form>
 
-            <form action={changeStatus} className="space-y-1.5">
-              <label className="gh-label" htmlFor="status">
-                Estado
-              </label>
-              <input type="hidden" name="id" value={user.id} />
-              <div className="flex gap-2">
-                <select id="status" name="status" defaultValue={user.status} className="gh-input text-xs">
-                  <option value="active">Activo</option>
-                  <option value="suspended">Suspendido</option>
-                </select>
-                <button
-                  type="submit"
-                  disabled={user.id === me.id}
-                  className="gh-btn gh-btn-ghost text-[11px] disabled:opacity-40"
-                >
-                  Guardar
-                </button>
-              </div>
-              {user.id === me.id && (
-                <p className="text-[11px] text-base-500">No puedes cambiar tu propio estado.</p>
-              )}
-            </form>
+                <form action={changeStatus} className="space-y-1.5">
+                  <label className="gh-label" htmlFor="status">
+                    Estado
+                  </label>
+                  <input type="hidden" name="id" value={user.id} />
+                  <div className="flex gap-2">
+                    <select id="status" name="status" defaultValue={user.status} className="gh-input text-xs">
+                      <option value="active">Activo</option>
+                      <option value="suspended">Suspendido</option>
+                    </select>
+                    <button
+                      type="submit"
+                      disabled={user.id === me.id}
+                      className="gh-btn gh-btn-ghost text-[11px] disabled:opacity-40"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                  {user.id === me.id && (
+                    <p className="text-[11px] text-base-500">No puedes cambiar tu propio estado.</p>
+                  )}
+                </form>
+              </>
+            )}
           </div>
 
           {/* Biblioteca resumida */}

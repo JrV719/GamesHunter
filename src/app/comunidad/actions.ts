@@ -257,6 +257,8 @@ export async function moderatePost(formData: FormData) {
   const user = await requireStaff();
   const id = String(formData.get("id") ?? "");
   const action = String(formData.get("action") ?? "");
+  // Vuelve a la pestaña desde la que se moderó, no siempre a la de denuncias.
+  const vista = String(formData.get("vista") ?? "publicaciones");
 
   if (!id) redirect("/admin/comunidad");
 
@@ -273,13 +275,14 @@ export async function moderatePost(formData: FormData) {
   revalidatePath("/comunidad");
   revalidatePath("/admin/comunidad");
   revalidatePath(`/comunidad/${id}`);
-  redirect(`/admin/comunidad?hecho=${action}`);
+  redirect(`/admin/comunidad?vista=${encodeURIComponent(vista)}&hecho=${encodeURIComponent(action)}`);
 }
 
 export async function moderateComment(formData: FormData) {
   const user = await requireStaff();
   const id = String(formData.get("id") ?? "");
   const action = String(formData.get("action") ?? "");
+  const vista = String(formData.get("vista") ?? "comentarios");
   if (!id) redirect("/admin/comunidad");
 
   if (action === "hide" || action === "publish") {
@@ -292,7 +295,7 @@ export async function moderateComment(formData: FormData) {
 
   revalidatePath("/admin/comunidad");
   revalidatePath(`/comunidad/${formData.get("postId") ?? ""}`);
-  redirect(`/admin/comunidad?hecho=${action}`);
+  redirect(`/admin/comunidad?vista=${encodeURIComponent(vista)}&hecho=${encodeURIComponent(action)}`);
 }
 
 /** Cierra una denuncia una vez revisada. */

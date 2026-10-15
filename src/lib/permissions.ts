@@ -45,9 +45,8 @@ export async function requireUser(returnTo = ""): Promise<SessionUser> {
 /**
  * Exige rol admin o moderador.
  *
- * `redirect()` lanza una excepción Next.js: por eso el `throw` de la línea
- * siguiente solo existe para que TypeScript sepa que la función no devuelve
- * `null` cuando se usa fuera de un Server Component.
+ * `redirect()` está tipado como `never`, así que el analizador de control de
+ * flujo sabe que, si se supera esta línea, `user` no es `null`.
  */
 export async function requireStaff(returnTo = "/admin"): Promise<SessionUser> {
   const user = await getCurrentUser();
@@ -57,7 +56,7 @@ export async function requireStaff(returnTo = "/admin"): Promise<SessionUser> {
   if (!isStaff(user)) {
     redirect("/?error=sin-permisos");
   }
-  throw new Error("Sin permisos.");
+  return user;
 }
 
 /** Exige rol admin. Para acciones irreversibles (borrar juegos, cambiar roles). */
@@ -69,7 +68,7 @@ export async function requireAdmin(returnTo = "/admin"): Promise<SessionUser> {
   if (!isAdminUser(user)) {
     redirect("/?error=sin-permisos");
   }
-  throw new Error("Sin permisos.");
+  return user;
 }
 
 /**

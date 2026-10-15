@@ -47,6 +47,14 @@ model User {
   guides       Guide[]          @relation("GuideAuthor")
   comparisons  Comparison[]
   reviewNotes  DataProvenance[] @relation("ProvenanceReviewer")
+  // Comunidad
+  posts        Post[]
+  comments     Comment[]
+  postVotes    PostVote[]
+  commentVotes CommentVote[]
+  reports      Report[]        @relation("ReportReporter")
+  reportsClosed Report[]       @relation("ReportResolver")
+  activity     ActivityLog[]
 
   @@index([role])
   @@map("users")
@@ -146,7 +154,7 @@ model Game {
   trailerUrl      String?
 
   // Estado editorial
-  status             String  @default("draft") // draft | published | archived
+  status             String  @default("draft") // draft | upcoming | published | archived
   dataStatus         String  @default("provisional") // verified | provisional | demo
   isFeatured         Boolean @default(false)
   featuredNote       String?
@@ -176,6 +184,7 @@ model Game {
   userGames       UserGame[]
   platinaums      UserPlatinum[]
   comparisons     ComparisonItem[]
+  posts           Post[]
 
   @@index([status, popularity])
   @@index([status, releaseDate])
@@ -609,4 +618,155 @@ model ComparisonItem {
   @@unique([comparisonId, gameId])
   @@index([gameId])
   @@map("comparison_items")
+}
+
+// ----------------------------------------------------------------------------
+// Comunidad: foro, opiniones, comentarios
+// ----------------------------------------------------------------------------
+// Espejo en Prisma de las tablas `topics`, `posts`, `comments`, `post_votes`,
+// `comment_votes`, `reports` y `activity_log` de database/schema.sql.
+// Sirve para documentar el modelo y para la ruta de migración a PostgreSQL.
+
+model Topic {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?
+  accent      String   @default("#38bdf8")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+
+  @@index([sortOrder])
+  @@map("topics")
+}
+
+model Post {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Opcional a propósito: un hilo puede no hablar de ningún juego.
+  gameId          String?
+  game            Game?     @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  topicId         String?
+  topic           Topic?    @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  /// post | opinion | question | tip
+  kind            String    @default("post")
+  title           String
+  body            String
+  /// published | hidden  (nunca se borra físicamente)
+  status          String    @default("published")
+  isPinned        Boolean   @default(false)
+  commentsCount   Int       @default(0)
+  viewsCount      Int       @default(0)
+  votesCount      Int       @default(0)
+  ratingDifficulty Int?
+  ratingHours     Float?
+  ratingOverall   Int?
+  moderationNote  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  editedAt        DateTime?
+  lastActivityAt  DateTime  @default(now())
+
+  comments Comment[]
+  votes    PostVote[]
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@index([gameId])
+  @@index([topicId])
+  @@index([gameId, kind, status])
+  @@map("posts")
+}
+
+model Comment {
+  id             String    @id @default(cuid())
+  postId         String
+  post           Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId       String?
+  parent         Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies        Comment[] @relation("CommentReplies")
+  body           String
+  /// published | hidden
+  status         String    @default("published")
+  /// 0 = comentario raíz, 1 = respuesta. Nunca más de un nivel.
+  depth          Int       @default(0)
+  votesCount     Int       @default(0)
+  moderationNote String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  editedAt       DateTime?
+
+  votes CommentVote[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model PostVote {
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([postId, userId])
+  @@map("post_votes")
+}
+
+model CommentVote {
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([commentId, userId])
+  @@map("comment_votes")
+}
+
+model Report {
+  id             String    @id @default(cuid())
+  reporterId     String?
+  reporter       User?     @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+  /// post | comment
+  targetType     String
+  targetId       String
+  reason         String
+  details        String?
+  /// open | resolved
+  status         String    @default("open")
+  resolvedBy     String?
+  resolvedByUser User?     @relation(fields: [resolvedBy], references: [id], onDelete: SetNull)
+  resolutionNote String?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String?
+  entityId   String?
+  summary    String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("activity_log")
 }

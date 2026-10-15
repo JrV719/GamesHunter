@@ -180,6 +180,35 @@ export default async function AboutPage() {
         </ol>
       </section>
 
+      {/* Qué es la comunidad y qué NO es */}
+      <section className="mb-12">
+        <h2 className="gh-section-title mb-3">La comunidad y sus opiniones</h2>
+        <div className="gh-card space-y-3 p-5 text-[13px] leading-relaxed text-base-300">
+          <p>
+            En cada ficha de juego hay una sección de <strong>opiniones de la comunidad</strong>, y
+            en <Link href="/comunidad" className="gh-link">Comunidad</Link> hay un foro abierto por
+            temas: platinos, trofeos, dificultad, consejos, online y noticias.
+          </p>
+          <p>
+            Es importante no confundirlas con los datos de la ficha. La dificultad del Platino y los
+            tiempos que aparecen arriba son <strong>datos verificados</strong>, con su fuente, su
+            fecha y su nivel de confianza. Las opiniones son{" "}
+            <strong>la experiencia de quien lo consiguió</strong>: dependen del jugador, de su
+            versión y de si usó la guía abierta. Por eso van siempre en un bloque aparte, con su
+            propio aviso, y nunca sustituyen a los datos documentados.
+          </p>
+          <p>
+            Las medias que sí se calculan (dificultad media, horas medias) salen únicamente de las
+            opiniones, y por eso se muestran con una sola cifra y su número de respuestas.
+          </p>
+          <p>
+            Cada persona puede editar o borrar su propio contenido. Los administradores y
+            moderadores pueden ocultar o eliminar cualquier publicación, y todo el mundo puede
+            denunciar contenido que incumpla las normas desde el botón de la bandera.
+          </p>
+        </div>
+      </section>
+
       {/* Advertencia */}
       <div className="gh-card border-amber-500/30 bg-amber-500/[0.06] p-5">
         <p className="flex items-center gap-2 text-sm font-bold text-amber-200">

@@ -2,10 +2,12 @@ import Link from "next/link";
 import { getSiteStats } from "@/lib/queries/games";
 import { all, one } from "@/lib/db";
 import { IconTrophy, IconGamepad, IconBook, IconDatabase, IconUsers, IconTrend } from "@/components/ui/Icon";
+import { requireAdmin } from "@/lib/permissions";
 
 export const metadata = { title: "Panel de administración", robots: { index: false } };
 
 export default async function AdminDashboard() {
+  await requireAdmin();
   const [stats, games, pendingTrophies, missingGuides, recentUsers] = await Promise.all([
     getSiteStats(),
     all<{ n: number }>("SELECT COUNT(*) AS n FROM games"),

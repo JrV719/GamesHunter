@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { listUsers, setUserRole, setUserStatus } from "@/lib/auth";
-import { requireAdmin } from "@/lib/permissions";
+import { requireAdmin, requireStaff } from "@/lib/permissions";
 import { formatDate } from "@/lib/utils";
 import { IconUsers } from "@/components/ui/Icon";
 import { USER_ROLES } from "@/lib/constants";
@@ -9,8 +9,11 @@ import { USER_ROLES } from "@/lib/constants";
 export const metadata = { title: "Administrar usuarios", robots: { index: false } };
 
 export default async function AdminUsersPage() {
-  const me = await requireAdmin();
+  // Un moderador puede consultar la lista, pero NO cambiar roles ni estados:
+  // para eso cada Server Action vuelve a exigir requireAdmin().
+  const me = await requireStaff();
   const users = await listUsers();
+  const canEdit = me.role === "admin";
 
   async function changeRole(formData: FormData) {
     "use server";
@@ -76,43 +79,49 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-2.5 font-mono text-base-200">{u.platinas}</td>
                 <td className="px-4 py-2.5 text-[11px] text-base-400">{formatDate(u.createdAt)}</td>
                 <td className="px-4 py-2.5">
-                  <form action={changeRole}>
-                    <input type="hidden" name="id" value={u.id} />
-                    <select
-                      name="role"
-                      defaultValue={u.role}
-                      className="gh-input w-auto py-1 text-xs"
-                    >
-                      {USER_ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <button type="submit" className="gh-btn gh-btn-ghost ml-1 py-1 text-[11px]">
-                      Guardar
-                    </button>
-                  </form>
+                  {canEdit ? (
+                    <form action={changeRole}>
+                      <input type="hidden" name="id" value={u.id} />
+                      <select name="role" defaultValue={u.role} className="gh-input w-auto py-1 text-xs">
+                        {USER_ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" className="gh-btn gh-btn-ghost ml-1 py-1 text-[11px]">
+                        Guardar
+                      </button>
+                    </form>
+                  ) : (
+                    <span className="text-[11px] capitalize text-base-400">{u.role}</span>
+                  )}
                 </td>
                 <td className="px-4 py-2.5">
-                  <form action={changeStatus}>
-                    <input type="hidden" name="id" value={u.id} />
-                    <select
-                      name="status"
-                      defaultValue={u.status}
-                      className="gh-input w-auto py-1 text-xs"
-                    >
-                      <option value="active">Activo</option>
-                      <option value="suspended">Suspendido</option>
-                    </select>
-                    <button
-                      type="submit"
-                      disabled={u.id === me?.id}
-                      className="gh-btn gh-btn-ghost ml-1 py-1 text-[11px] disabled:opacity-40"
-                    >
-                      Guardar
-                    </button>
-                  </form>
+                  {canEdit ? (
+                    <form action={changeStatus}>
+                      <input type="hidden" name="id" value={u.id} />
+                      <select
+                        name="status"
+                        defaultValue={u.status}
+                        className="gh-input w-auto py-1 text-xs"
+                      >
+                        <option value="active">Activo</option>
+                        <option value="suspended">Suspendido</option>
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={u.id === me?.id}
+                        className="gh-btn gh-btn-ghost ml-1 py-1 text-[11px] disabled:opacity-40"
+                      >
+                        Guardar
+                      </button>
+                    </form>
+                  ) : (
+                    <span className="text-[11px] text-base-400">
+                      {u.status === "active" ? "Activo" : "Suspendido"}
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

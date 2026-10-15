@@ -1,20 +1,23 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { isStaff } from "@/lib/permissions";
 import Link from "next/link";
-import { IconDatabase, IconGamepad } from "@/components/ui/Icon";
+import { IconDatabase, IconGamepad, IconChat } from "@/components/ui/Icon";
 
-/** Protege todas las rutas /admin: exige rol admin o moderator. */
+/**
+ * Protege todas las rutas /admin.
+ *
+ * El layout sólo decide qué puede VER una persona; cada página y cada Server
+ * Action vuelven a comprobar el permiso con requireStaff()/requireAdmin().
+ * El layout no es una frontera de seguridad: una Server Action es un endpoint
+ * HTTP público y se puede invocar directamente.
+ */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login?siguiente=/admin");
-  if (user.role !== "admin" && user.role !== "moderator") {
-    return (
-      <div className="gh-container py-16">
-        <EmptyAccess />
-      </div>
-    );
-  }
+
+  const staff = isStaff(user);
 
   return (
     <div className="gh-container py-8">
@@ -29,37 +32,61 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </span>
         </div>
         <p className="mt-1.5 text-sm text-base-400">
-          Gestiona juegos, trofeos, guías, comunidad, fuentes, plataformas y categorías sin tocar el
-          código.
+          {staff ? (
+            <>
+              Gestiona juegos, trofeos, guías, comunidad, fuentes, plataformas y categorías sin tocar
+              el código.
+            </>
+          ) : (
+            "Esta zona es sólo para administradores y moderadores."
+          )}
         </p>
       </header>
 
-      <AdminNav />
+      <AdminNav role={staff ? (user.role === "admin" ? "admin" : "moderator") : "user"} />
 
       <div className="mt-6">{children}</div>
     </div>
   );
 }
 
-const NAV = [
-  { href: "/admin", label: "Resumen" },
-  { href: "/admin/juegos", label: "Juegos" },
-  { href: "/admin/trofeos", label: "Trofeos" },
-  { href: "/admin/guias", label: "Guías" },
-  { href: "/admin/comunidad", label: "Comunidad" },
-  { href: "/admin/fuentes", label: "Fuentes" },
-  { href: "/admin/categorias", label: "Categorías" },
-  { href: "/admin/plataformas", label: "Plataformas" },
-  { href: "/admin/usuarios", label: "Usuarios" },
-];
+/**
+ * Pestañas según el rol.
+ *
+ * `moderator` sólo entra a la moderación de la comunidad: no gestiona juegos,
+ * guías ni usuarios. Es la misma regla que aplican las páginas.
+ */
+const NAV_BY_ROLE: Record<string, { href: string; label: string }[]> = {
+  admin: [
+    { href: "/admin", label: "Resumen" },
+    { href: "/admin/juegos", label: "Juegos" },
+    { href: "/admin/trofeos", label: "Trofeos" },
+    { href: "/admin/guias", label: "Guías" },
+    { href: "/admin/comunidad", label: "Comunidad" },
+    { href: "/admin/fuentes", label: "Fuentes" },
+    { href: "/admin/categorias", label: "Categorías" },
+    { href: "/admin/plataformas", label: "Plataformas" },
+    { href: "/admin/usuarios", label: "Usuarios" },
+  ],
+  moderator: [
+    { href: "/admin/comunidad", label: "Comunidad" },
+    { href: "/admin/usuarios", label: "Usuarios (lectura)" },
+  ],
+  user: [],
+};
 
-function AdminNav() {
+function AdminNav({ role }: { role: string }) {
+  const items = NAV_BY_ROLE[role] ?? [];
+  if (items.length === 0) {
+    return <EmptyAccess />;
+  }
+
   return (
     <nav
       aria-label="Secciones del panel"
       className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
     >
-      {NAV.map((n) => (
+      {items.map((n) => (
         <Link
           key={n.href}
           href={n.href}
@@ -81,9 +108,14 @@ function EmptyAccess() {
         Tu cuenta no tiene permisos de administración. Si crees que es un error, pide a un
         administrador que cambie tu rol desde la sección de usuarios.
       </p>
-      <Link href="/" className="gh-btn gh-btn-ghost text-xs">
-        Volver al inicio
-      </Link>
+      <div className="flex gap-2">
+        <Link href="/" className="gh-btn gh-btn-ghost text-xs">
+          Volver al inicio
+        </Link>
+        <Link href="/comunidad" className="gh-btn gh-btn-ghost text-xs">
+          <IconChat size={13} /> Ir a la comunidad
+        </Link>
+      </div>
     </div>
   );
 }
