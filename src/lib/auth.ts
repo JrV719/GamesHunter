@@ -61,20 +61,20 @@ export async function registerUser(input: {
 }) {
   const email = input.email.toLowerCase().trim();
   const username = input.username.toLowerCase().trim();
-  if (one<{ id: string }>("SELECT id FROM users WHERE email = ?", [email])) {
+  if (await one<{ id: string }>("SELECT id FROM users WHERE email = ?", [email])) {
     throw new Error("Ya existe una cuenta con ese correo.");
   }
-  if (one<{ id: string }>("SELECT id FROM users WHERE username = ?", [username])) {
+  if (await one<{ id: string }>("SELECT id FROM users WHERE username = ?", [username])) {
     throw new Error("Ese nombre de usuario ya está en uso.");
   }
   const passwordHash = await hashPassword(input.password);
   const id = newId("user");
-  run(
+  await run(
     `INSERT INTO users (id, email, username, display_name, password_hash, role, status, locale, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'user', 'active', 'es', ?, ?)`,
     [id, email, username, input.displayName?.trim() || null, passwordHash, now(), now()],
   );
-  return one<User>(
+  return await one<User>(
     `SELECT id, email, username, display_name AS displayName, password_hash AS passwordHash,
             role, status, avatar_url AS avatarUrl, bio, locale, created_at AS createdAt, updated_at AS updatedAt
        FROM users WHERE id = ?`,
@@ -84,7 +84,7 @@ export async function registerUser(input: {
 
 export async function verifyCredentials(identifier: string, password: string) {
   const id = identifier.toLowerCase().trim();
-  const user = one<User>(
+  const user = await one<User>(
     `SELECT id, email, username, display_name AS displayName, password_hash AS passwordHash,
             role, status, avatar_url AS avatarUrl, bio, locale, created_at AS createdAt, updated_at AS updatedAt
        FROM users WHERE email = ? OR username = ?`,
@@ -99,7 +99,7 @@ export async function verifyCredentials(identifier: string, password: string) {
 export async function createSession(userId: string, meta?: { userAgent?: string; ip?: string }) {
   const token = createToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  run(
+  await run(
     `INSERT INTO sessions (id, token, user_id, expires_at, user_agent, ip, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [newId("sess"), token, userId, expiresAt.toISOString(), meta?.userAgent?.slice(0, 250) ?? null, meta?.ip ?? null, now()],
@@ -117,12 +117,12 @@ export async function createSession(userId: string, meta?: { userAgent?: string;
 export async function destroySession() {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
-  if (token) run("DELETE FROM sessions WHERE token = ?", [token]);
+  if (token) await run("DELETE FROM sessions WHERE token = ?", [token]);
   jar.delete(COOKIE_NAME);
 }
 
 export async function purgeExpiredSessions() {
-  run("DELETE FROM sessions WHERE expires_at < ?", [now()]);
+  await run("DELETE FROM sessions WHERE expires_at < ?", [now()]);
 }
 
 // ----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   if (!token) return null;
   if (!verifySignature(token)) return null;
 
-  const row = one<{
+  const row = await one<{
     id: string;
     email: string;
     username: string;
@@ -189,15 +189,15 @@ function now() {
 // ----------------------------------------------------------------------------
 
 export async function toggleFavorite(userId: string, gameId: string): Promise<boolean> {
-  const existing = one<{ id: string }>(
+  const existing = await one<{ id: string }>(
     "SELECT id FROM favorites WHERE user_id = ? AND game_id = ?",
     [userId, gameId],
   );
   if (existing) {
-    run("DELETE FROM favorites WHERE id = ?", [existing.id]);
+    await run("DELETE FROM favorites WHERE id = ?", [existing.id]);
     return false;
   }
-  run("INSERT INTO favorites (id, user_id, game_id, created_at) VALUES (?, ?, ?, ?)", [
+  await run("INSERT INTO favorites (id, user_id, game_id, created_at) VALUES (?, ?, ?, ?)", [
     newId("fav"),
     userId,
     gameId,
@@ -212,10 +212,10 @@ export async function setUserGameStatus(
   status: string,
   extra: { progress?: number; hoursPlayed?: number; difficulty?: string | null; notes?: string } = {},
 ) {
-  const existing = one<{ id: string }>("SELECT id FROM user_games WHERE user_id = ? AND game_id = ?", [
-    userId,
-    gameId,
-  ]);
+  const existing = await one<{ id: string }>(
+    "SELECT id FROM user_games WHERE user_id = ? AND game_id = ?",
+    [userId, gameId],
+  );
   const payload: SqlParam[] = [
     status,
     extra.progress ?? 0,
@@ -226,14 +226,14 @@ export async function setUserGameStatus(
     status === "completed" ? now() : null,
   ];
   if (existing) {
-    run(
+    await run(
       `UPDATE user_games SET status = ?, progress = ?, hours_played = ?, difficulty = ?, notes = ?,
               started_at = COALESCE(started_at, ?), finished_at = ?, updated_at = ?
         WHERE id = ?`,
       [...payload, now(), existing.id],
     );
   } else {
-    run(
+    await run(
       `INSERT INTO user_games (id, user_id, game_id, status, progress, hours_played, difficulty,
                                notes, started_at, finished_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -251,7 +251,7 @@ export async function registerPlatinum(input: {
   note?: string | null;
 }) {
   const isGold = input.grade === "oro";
-  run(
+  await run(
     `INSERT INTO user_platinums (id, user_id, game_id, platform_id, earned_at, grade, is_gold, note, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -269,15 +269,15 @@ export async function registerPlatinum(input: {
 }
 
 export async function toggleUserTrophy(userId: string, gameId: string, trophyId: string) {
-  const existing = one<{ id: string }>(
+  const existing = await one<{ id: string }>(
     "SELECT id FROM user_trophies WHERE user_id = ? AND trophy_id = ?",
     [userId, trophyId],
   );
   if (existing) {
-    run("DELETE FROM user_trophies WHERE id = ?", [existing.id]);
+    await run("DELETE FROM user_trophies WHERE id = ?", [existing.id]);
     return false;
   }
-  run(
+  await run(
     `INSERT INTO user_trophies (id, user_id, game_id, trophy_id, earned_at, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [newId("ut"), userId, gameId, trophyId, now(), now()],
@@ -286,7 +286,7 @@ export async function toggleUserTrophy(userId: string, gameId: string, trophyId:
 }
 
 export async function getUserStats(userId: string) {
-  const row = one<{
+  const row = await one<{
     platinas: number;
     completados: number;
     jugando: number;
@@ -309,20 +309,20 @@ export async function getUserStats(userId: string) {
 }
 
 export async function getUserCollection(userId: string) {
-  const favorites = all(
+  const favorites = await all(
     `SELECT g.slug, g.title, g.cover_image AS coverImage, g.accent_color AS accentColor
        FROM favorites f JOIN games g ON g.id = f.game_id
       WHERE f.user_id = ? ORDER BY f.created_at DESC`,
     [userId],
   );
-  const library = all(
+  const library = await all(
     `SELECT g.slug, g.title, g.cover_image AS coverImage, g.accent_color AS accentColor,
             ug.status, ug.progress, ug.hours_played AS hoursPlayed, ug.finished_at AS finishedAt
        FROM user_games ug JOIN games g ON g.id = ug.game_id
       WHERE ug.user_id = ? ORDER BY ug.updated_at DESC`,
     [userId],
   );
-  const platinas = all(
+  const platinas = await all(
     `SELECT g.slug, g.title, g.cover_image AS coverImage, g.accent_color AS accentColor,
             up.earned_at AS earnedAt, up.grade, p.short_name AS platformName
        FROM user_platinums up JOIN games g ON g.id = up.game_id
@@ -335,7 +335,7 @@ export async function getUserCollection(userId: string) {
 
 /** Usuarios registrados (panel de administración). */
 export async function listUsers(limit = 200) {
-  return all<{
+  return await all<{
     id: string;
     email: string;
     username: string;
@@ -354,9 +354,9 @@ export async function listUsers(limit = 200) {
 }
 
 export async function setUserRole(userId: string, role: string) {
-  run("UPDATE users SET role = ?, updated_at = ? WHERE id = ?", [role, now(), userId]);
+  await run("UPDATE users SET role = ?, updated_at = ? WHERE id = ?", [role, now(), userId]);
 }
 
 export async function setUserStatus(userId: string, status: string) {
-  run("UPDATE users SET status = ?, updated_at = ? WHERE id = ?", [status, now(), userId]);
+  await run("UPDATE users SET status = ?, updated_at = ? WHERE id = ?", [status, now(), userId]);
 }

@@ -15,7 +15,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
   const sp = await searchParams;
   const sources = await getSources();
 
-  const games = all<{ id: string; title: string; slug: string; trophyCount: number }>(
+  const games = await all<{ id: string; title: string; slug: string; trophyCount: number }>(
     `SELECT g.id, g.title, g.slug,
             (SELECT COUNT(*) FROM trophies t WHERE t.game_id = g.id) AS trophyCount
        FROM games g ORDER BY g.title`,
@@ -26,7 +26,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
 
   const trophies = selectedGame
     ? q
-      ? all<Row>(
+      ? await all<Row>(
           `SELECT gt.id, t.name, t.type, gt.how_to AS howTo, gt.difficulty,
                   gt.is_missable AS isMissable, gt.is_online AS isOnline, gt.sort_order AS sortOrder,
                   gt.recommended_stage AS recommendedStage, gt.requires_difficulty AS requiresDifficulty
@@ -34,7 +34,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
             WHERE gt.game_id = ? AND t.name LIKE ? ORDER BY gt.sort_order LIMIT 100`,
           [selectedGame, `%${q}%`],
         )
-      : all<Row>(
+      : await all<Row>(
           `SELECT gt.id, t.name, t.type, gt.how_to AS howTo, gt.difficulty,
                   gt.is_missable AS isMissable, gt.is_online AS isOnline, gt.sort_order AS sortOrder,
                   gt.recommended_stage AS recommendedStage, gt.requires_difficulty AS requiresDifficulty
@@ -47,9 +47,11 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
   async function addTrophy(formData: FormData) {
     "use server";
     const gameId = String(formData.get("gameId") ?? "");
-    const listId = one<{ id: string }>(
-      "SELECT id FROM trophy_lists WHERE game_id = ? ORDER BY is_default DESC LIMIT 1",
-      [gameId],
+    const listId = (
+      await one<{ id: string }>(
+        "SELECT id FROM trophy_lists WHERE game_id = ? ORDER BY is_default DESC LIMIT 1",
+        [gameId],
+      )
     )?.id;
     if (!listId) redirect("/admin/trofeos?juego=" + gameId + "&error=El+juego+no+tiene+lista");
 
@@ -57,12 +59,14 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
     if (!name) redirect("/admin/trofeos?juego=" + gameId + "&error=Nombre+obligatorio");
     const type = String(formData.get("type") ?? "bronze") as TrophyType;
     const maxOrder =
-      one<{ n: number }>("SELECT COALESCE(MAX(sort_order), -1) AS n FROM game_trophies WHERE trophy_list_id = ?", [
-        listId,
-      ])?.n ?? -1;
+      (
+        await one<{ n: number }>("SELECT COALESCE(MAX(sort_order), -1) AS n FROM game_trophies WHERE trophy_list_id = ?", [
+          listId,
+        ])
+      )?.n ?? -1;
 
     const trophyId = newId("trophy");
-    runMany([
+    await runMany([
       {
         sql: `INSERT INTO trophies (id, slug, name, type, official_description, game_id, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -107,7 +111,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
     "use server";
     const gtId = String(formData.get("gtId") ?? "");
     const name = String(formData.get("name") ?? "").trim();
-    run(
+    await run(
       `UPDATE game_trophies SET how_to = ?, difficulty = ?, is_missable = ?, is_online = ?,
               recommended_stage = ?, requires_difficulty = ?, is_dlc = ? WHERE id = ?`,
       [
@@ -121,7 +125,7 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
         gtId,
       ],
     );
-    run("UPDATE trophies SET name = ?, updated_at = ? WHERE id = (SELECT trophy_id FROM game_trophies WHERE id = ?)", [
+    await run("UPDATE trophies SET name = ?, updated_at = ? WHERE id = (SELECT trophy_id FROM game_trophies WHERE id = ?)", [
       name,
       new Date().toISOString(),
       gtId,
@@ -136,8 +140,10 @@ export default async function AdminTrophiesPage({ searchParams }: { searchParams
     "use server";
     const gtId = String(formData.get("gtId") ?? "");
     const gameId = String(formData.get("gameId") ?? "");
-    run("DELETE FROM game_trophies WHERE id = ?", [gtId]);
-    run("DELETE FROM trophies WHERE id = (SELECT trophy_id FROM game_trophies WHERE id = ?)", [gtId]);
+    // Primero el trofeo: el ON DELETE CASCADE de game_trophies borra la fila
+    // asociada. Al revés, el subquery ya no encontraría nada y quedaría huérfana.
+    await run("DELETE FROM trophies WHERE id = (SELECT trophy_id FROM game_trophies WHERE id = ?)", [gtId]);
+    await run("DELETE FROM game_trophies WHERE id = ?", [gtId]);
     revalidatePath("/admin/trofeos");
     redirect(`/admin/trofeos?juego=${gameId}&borrado=1`);
   }

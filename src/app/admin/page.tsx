@@ -21,17 +21,19 @@ export default async function AdminDashboard() {
     all<{ n: number }>("SELECT COUNT(*) AS n FROM users"),
   ]);
 
-  const byStatus = all<{ status: string; n: number }>(
-    "SELECT status, COUNT(*) AS n FROM games GROUP BY status",
-  );
-  const byDataStatus = all<{ data_status: string; n: number }>(
-    "SELECT data_status, COUNT(*) AS n FROM games GROUP BY data_status",
-  );
-  const topSources = all<{ name: string; n: number }>(
-    `SELECT gs.name, COUNT(dp.id) AS n FROM data_provenance dp
-       JOIN guide_sources gs ON gs.id = dp.source_id
-      GROUP BY gs.name ORDER BY n DESC`,
-  );
+  const [byStatus, byDataStatus, topSources] = await Promise.all([
+    all<{ status: string; n: number }>(
+      "SELECT status, COUNT(*) AS n FROM games GROUP BY status",
+    ),
+    all<{ data_status: string; n: number }>(
+      "SELECT data_status, COUNT(*) AS n FROM games GROUP BY data_status",
+    ),
+    all<{ name: string; n: number }>(
+      `SELECT gs.name, COUNT(dp.id) AS n FROM data_provenance dp
+         JOIN guide_sources gs ON gs.id = dp.source_id
+        GROUP BY gs.name ORDER BY n DESC`,
+    ),
+  ]);
 
   const cards = [
     { label: "Juegos", value: games[0]?.n ?? 0, icon: IconGamepad, href: "/admin/juegos" },

@@ -17,7 +17,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
   const q = (sp.q ?? "").trim();
 
   const games = q
-    ? all<{
+    ? await all<{
         id: string;
         slug: string;
         title: string;
@@ -39,7 +39,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
           ORDER BY g.title LIMIT 100`,
         [`%${q}%`, `%${q}%`],
       )
-    : all<{
+    : await all<{
         id: string;
         slug: string;
         title: string;
@@ -91,7 +91,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
 
     const id = newId("game");
     const now = new Date().toISOString();
-    runMany([
+    await runMany([
       {
         sql: `INSERT INTO games (id, slug, title, tagline, summary, description, developer_id,
                 release_date, accent_color, data_status, status, search_text, created_at, updated_at)
@@ -144,7 +144,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
     const categoryIds = formData.getAll("categoryIds").map(String);
 
     const devName = developers.find((d) => d.id === developerId)?.name ?? "";
-    const current = one<{ summary: string; status: string; dataStatus: string; slug: string }>(
+    const current = await one<{ summary: string; status: string; dataStatus: string; slug: string }>(
       "SELECT summary, status, data_status AS dataStatus, slug FROM games WHERE id = ?",
       [id],
     );
@@ -187,7 +187,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
         params: [id, cid, i === 0 ? 1 : 0],
       })),
     ];
-    runMany(stmts);
+    await runMany(stmts);
 
     revalidatePath("/admin/juegos");
     revalidatePath(`/juegos/${current.slug}`);
@@ -200,14 +200,14 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: S
   async function deleteGame(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
-    run("DELETE FROM games WHERE id = ?", [id]);
+    await run("DELETE FROM games WHERE id = ?", [id]);
     revalidatePath("/admin/juegos");
     revalidatePath("/juegos");
     redirect("/admin/juegos?borrado=1");
   }
 
   const editing = sp.edit
-    ? one<{
+    ? await one<{
         id: string;
         title: string;
         slug: string;
@@ -407,7 +407,7 @@ async function uniqueGameSlug(title: string) {
   let candidate = root;
   let i = 2;
   for (;;) {
-    const exists = one<{ id: string }>("SELECT id FROM games WHERE slug = ?", [candidate]);
+    const exists = await one<{ id: string }>("SELECT id FROM games WHERE slug = ?", [candidate]);
     if (!exists) return candidate;
     candidate = `${root}-${i++}`;
   }

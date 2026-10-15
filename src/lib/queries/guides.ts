@@ -27,17 +27,18 @@ export async function listGuides(opts: { gameId?: string; limit?: number; page?:
   }
   const where = ` WHERE ${conds.join(" AND ")}`;
 
-  const total = one<{ n: number }>(`SELECT COUNT(*) AS n FROM guides gu${where}`, params)?.n ?? 0;
-  const guides = all<Row>(
+  const total =
+    (await one<{ n: number }>(`SELECT COUNT(*) AS n FROM guides gu${where}`, params))?.n ?? 0;
+  const guides = await all<Row>(
     `${GUIDE_WITH_GAME}${where} ORDER BY gu.published_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, (page - 1) * pageSize],
   );
 
   for (const g of guides) {
-    g.stepCount = one<{ n: number }>("SELECT COUNT(*) AS n FROM guide_steps WHERE guide_id = ?", [
-      g.id,
-    ])?.n;
-    g.sources = all<Row>(
+    g.stepCount = (
+      await one<{ n: number }>("SELECT COUNT(*) AS n FROM guide_steps WHERE guide_id = ?", [g.id])
+    )?.n;
+    g.sources = await all<Row>(
       `SELECT gs.name AS sourceName, gs.slug AS sourceSlug, gsr.url, gsr.scope, gsr.confidence
          FROM guide_source_refs gsr JOIN guide_sources gs ON gs.id = gsr.source_id
         WHERE gsr.guide_id = ?`,
@@ -49,13 +50,13 @@ export async function listGuides(opts: { gameId?: string; limit?: number; page?:
 }
 
 export async function getGuideBySlug(slug: string): Promise<Row | null> {
-  const guide = one<Row>(`${GUIDE_WITH_GAME} WHERE gu.slug = ? AND gu.status = 'published'`, [slug]);
+  const guide = await one<Row>(`${GUIDE_WITH_GAME} WHERE gu.slug = ? AND gu.status = 'published'`, [slug]);
   if (!guide) return null;
-  guide.steps = all<Row>(
+  guide.steps = await all<Row>(
     `SELECT id, guide_id AS guideId, step_number AS stepNumber, title, body, warning, sort_order AS sortOrder FROM guide_steps WHERE guide_id = ? ORDER BY step_number`,
     [guide.id],
   );
-  guide.sources = all<Row>(
+  guide.sources = await all<Row>(
     `SELECT gsr.*, gs.name AS sourceName, gs.slug AS sourceSlug, gs.homepage AS sourceHomepage,
             gs.usage_policy AS usagePolicy, gs.notes AS sourceNotes
        FROM guide_source_refs gsr JOIN guide_sources gs ON gs.id = gsr.source_id
@@ -66,12 +67,12 @@ export async function getGuideBySlug(slug: string): Promise<Row | null> {
 }
 
 export async function getGuideById(id: string): Promise<Row | null> {
-  const guide = one<Row>(`${GUIDE_WITH_GAME} WHERE gu.id = ?`, [id]);
+  const guide = await one<Row>(`${GUIDE_WITH_GAME} WHERE gu.id = ?`, [id]);
   if (!guide) return null;
-  guide.steps = all<Row>(`SELECT id, guide_id AS guideId, step_number AS stepNumber, title, body, warning, sort_order AS sortOrder FROM guide_steps WHERE guide_id = ? ORDER BY step_number`, [
+  guide.steps = await all<Row>(`SELECT id, guide_id AS guideId, step_number AS stepNumber, title, body, warning, sort_order AS sortOrder FROM guide_steps WHERE guide_id = ? ORDER BY step_number`, [
     guide.id,
   ]);
-  guide.sources = all<Row>(
+  guide.sources = await all<Row>(
     `SELECT gsr.*, gs.name AS sourceName, gs.slug AS sourceSlug
        FROM guide_source_refs gsr JOIN guide_sources gs ON gs.id = gsr.source_id
       WHERE gsr.guide_id = ?`,
@@ -94,7 +95,7 @@ export async function createGuide(input: {
   sourceRefs?: { sourceId: string; url: string; scope?: string; confidence?: string }[];
 }): Promise<Row> {
   const slug = await uniqueGuideSlug(input.title);
-  const { lastInsertRowid } = run(
+  const { lastInsertRowid } = await run(
     `INSERT INTO guides (id, slug, game_id, kind, title, summary, body, status, data_status,
                           is_community, author_id, reading_time, published_at, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -118,14 +119,14 @@ export async function createGuide(input: {
   );
   const id = String(lastInsertRowid);
   for (const [i, s] of (input.steps ?? []).entries()) {
-    run(
+    await run(
       `INSERT INTO guide_steps (id, guide_id, step_number, title, body, warning, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [newId("gstep"), id, i + 1, s.title, s.body, s.warning ?? null, i],
     );
   }
   for (const s of input.sourceRefs ?? []) {
-    run(
+    await run(
       `INSERT INTO guide_source_refs (id, guide_id, source_id, url, scope, confidence, last_updated)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [newId("gsref"), id, s.sourceId, s.url, s.scope ?? null, s.confidence ?? "media", new Date().toISOString()],
@@ -156,26 +157,26 @@ export async function updateGuide(
   if (fields.length === 0) return;
   fields.push("updated_at = ?");
   params.push(new Date().toISOString(), id);
-  run(`UPDATE guides SET ${fields.join(", ")} WHERE id = ?`, params);
+  await run(`UPDATE guides SET ${fields.join(", ")} WHERE id = ?`, params);
 }
 
 export async function replaceGuideSteps(
   guideId: string,
   steps: { title: string; body: string; warning?: string | null }[],
 ) {
-  run("DELETE FROM guide_steps WHERE guide_id = ?", [guideId]);
+  await run("DELETE FROM guide_steps WHERE guide_id = ?", [guideId]);
   for (const [i, s] of steps.entries()) {
-    run(
+    await run(
       `INSERT INTO guide_steps (id, guide_id, step_number, title, body, warning, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [newId("gstep"), guideId, i + 1, s.title, s.body, s.warning ?? null, i],
     );
   }
-  run("UPDATE guides SET updated_at = ? WHERE id = ?", [new Date().toISOString(), guideId]);
+  await run("UPDATE guides SET updated_at = ? WHERE id = ?", [new Date().toISOString(), guideId]);
 }
 
 export async function deleteGuide(id: string) {
-  run("DELETE FROM guides WHERE id = ?", [id]);
+  await run("DELETE FROM guides WHERE id = ?", [id]);
 }
 
 export async function uniqueGuideSlug(title: string): Promise<string> {
@@ -184,7 +185,7 @@ export async function uniqueGuideSlug(title: string): Promise<string> {
   let i = 2;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const exists = one<{ id: string }>("SELECT id FROM guides WHERE slug = ?", [candidate]);
+    const exists = await one<{ id: string }>("SELECT id FROM guides WHERE slug = ?", [candidate]);
     if (!exists) return candidate;
     candidate = `${root}-${i++}`;
   }

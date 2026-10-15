@@ -13,8 +13,8 @@ const POLICIES = [
   { value: "desconocido", label: "Sin verificar" },
 ];
 
-export default function AdminSourcesPage() {
-  const sources = all<{
+export default async function AdminSourcesPage() {
+  const sources = await all<{
     id: string;
     slug: string;
     name: string;
@@ -35,7 +35,7 @@ export default function AdminSourcesPage() {
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
     const slug = slugify(name);
-    run(
+    await run(
       `INSERT INTO guide_sources (id, slug, name, homepage, usage_policy, allows_copy, notes, is_active, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
       [
@@ -56,7 +56,7 @@ export default function AdminSourcesPage() {
   async function updateSource(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
-    run(
+    await run(
       `UPDATE guide_sources SET name = ?, homepage = ?, usage_policy = ?, allows_copy = ?,
               notes = ?, is_active = ?, sort_order = ? WHERE id = ?`,
       [
@@ -76,7 +76,7 @@ export default function AdminSourcesPage() {
 
   async function deleteSource(formData: FormData) {
     "use server";
-    run("DELETE FROM guide_sources WHERE id = ?", [String(formData.get("id") ?? "")]);
+    await run("DELETE FROM guide_sources WHERE id = ?", [String(formData.get("id") ?? "")]);
     revalidatePath("/admin/fuentes");
   }
 

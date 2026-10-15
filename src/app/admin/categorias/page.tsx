@@ -6,8 +6,8 @@ import { IconPlus, IconTrash, IconEdit } from "@/components/ui/Icon";
 
 export const metadata = { title: "Administrar categorías", robots: { index: false } };
 
-export default function AdminCategoriesPage() {
-  const categories = all<{
+export default async function AdminCategoriesPage() {
+  const categories = await all<{
     id: string;
     slug: string;
     name: string;
@@ -24,7 +24,7 @@ export default function AdminCategoriesPage() {
     "use server";
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
-    run(
+    await run(
       "INSERT INTO categories (id, slug, name, description, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
       [
         newId("cat"),
@@ -41,7 +41,7 @@ export default function AdminCategoriesPage() {
 
   async function updateCategory(formData: FormData) {
     "use server";
-    run(
+    await run(
       "UPDATE categories SET name = ?, description = ?, icon = ?, sort_order = ? WHERE id = ?",
       [
         String(formData.get("name") ?? "").trim(),
@@ -57,7 +57,7 @@ export default function AdminCategoriesPage() {
 
   async function deleteCategory(formData: FormData) {
     "use server";
-    run("DELETE FROM categories WHERE id = ?", [String(formData.get("id") ?? "")]);
+    await run("DELETE FROM categories WHERE id = ?", [String(formData.get("id") ?? "")]);
     revalidatePath("/admin/categorias");
     revalidatePath("/categorias");
   }

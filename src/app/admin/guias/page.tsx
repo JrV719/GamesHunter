@@ -16,7 +16,7 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
   const sp = await searchParams;
   const sources = await getSources();
 
-  const guides = all<{
+  const guides = await all<{
     id: string;
     slug: string;
     title: string;
@@ -36,7 +36,7 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
   );
 
   const editing = sp.edit
-    ? one<any>(
+    ? await one<any>(
         `SELECT id, slug, game_id AS gameId, kind, title, summary, body, status,
                 data_status AS dataStatus, is_community AS isCommunity, author_id AS authorId,
                 reading_time AS readingTime, view_count AS viewCount, published_at AS publishedAt,
@@ -46,13 +46,15 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
       )
     : null;
   const editingSteps = editing
-    ? all<{ title: string; body: string; warning: string | null }>(
+    ? await all<{ title: string; body: string; warning: string | null }>(
         "SELECT title, body, warning FROM guide_steps WHERE guide_id = ? ORDER BY step_number",
         [editing.id],
       )
     : [];
 
-  const games = all<{ id: string; title: string }>("SELECT id, title FROM games ORDER BY title");
+  const games = await all<{ id: string; title: string }>(
+    "SELECT id, title FROM games ORDER BY title",
+  );
 
   async function saveGuide(formData: FormData) {
     "use server";
@@ -79,8 +81,9 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
     if (!title) redirect("/admin/guias?error=Titulo+obligatorio");
 
     if (id) {
-      updateGuide(id, { title, summary, body, kind, status, dataStatus });
-      run("UPDATE guides SET game_id = ? WHERE id = ?", [gameId, id]);      replaceGuideSteps(id, steps);
+      await updateGuide(id, { title, summary, body, kind, status, dataStatus });
+      await run("UPDATE guides SET game_id = ? WHERE id = ?", [gameId, id]);
+      await replaceGuideSteps(id, steps);
       revalidatePath("/admin/guias");
       revalidatePath("/guias");
       redirect("/admin/guias?edit=" + id + "&guardado=1");
@@ -107,7 +110,7 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
   async function removeGuide(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
-    deleteGuide(id);
+    await deleteGuide(id);
     revalidatePath("/admin/guias");
     revalidatePath("/guias");
     redirect("/admin/guias?borrado=1");

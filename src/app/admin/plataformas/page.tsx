@@ -6,8 +6,8 @@ import { IconPlus, IconTrash, IconEdit } from "@/components/ui/Icon";
 
 export const metadata = { title: "Administrar plataformas", robots: { index: false } };
 
-export default function AdminPlatformsPage() {
-  const platforms = all<{
+export default async function AdminPlatformsPage() {
+  const platforms = await all<{
     id: string;
     slug: string;
     name: string;
@@ -23,7 +23,7 @@ export default function AdminPlatformsPage() {
     "use server";
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
-    run("INSERT INTO platforms (id, slug, name, short_name, sort_order) VALUES (?, ?, ?, ?, ?)", [
+    await run("INSERT INTO platforms (id, slug, name, short_name, sort_order) VALUES (?, ?, ?, ?, ?)", [
       newId("plat"),
       slugify(name),
       name,
@@ -35,7 +35,7 @@ export default function AdminPlatformsPage() {
 
   async function updatePlatform(formData: FormData) {
     "use server";
-    run(
+    await run(
       "UPDATE platforms SET name = ?, short_name = ?, sort_order = ? WHERE id = ?",
       [
         String(formData.get("name") ?? "").trim(),
@@ -50,11 +50,11 @@ export default function AdminPlatformsPage() {
   async function deletePlatform(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
-    const used = one<{ n: number }>("SELECT COUNT(*) AS n FROM game_platforms WHERE platform_id = ?", [
+    const used = await one<{ n: number }>("SELECT COUNT(*) AS n FROM game_platforms WHERE platform_id = ?", [
       id,
     ]);
     if ((used?.n ?? 0) > 0) return;
-    run("DELETE FROM platforms WHERE id = ?", [id]);
+    await run("DELETE FROM platforms WHERE id = ?", [id]);
     revalidatePath("/admin/plataformas");
   }
 

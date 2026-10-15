@@ -230,7 +230,7 @@ export async function listGames(opts: {
   const pageSize = opts.pageSize ?? PAGE_SIZE;
   const { where, params } = buildGameWhere(filters, { includeUnpublished: opts.includeUnpublished });
 
-  const countRow = one<{ n: number }>(
+  const countRow = await one<{ n: number }>(
     `SELECT COUNT(*) AS n FROM games g
      JOIN developers d ON d.id = g.developer_id
      LEFT JOIN platinum_profiles pp ON pp.game_id = g.id${where}`,
@@ -238,7 +238,7 @@ export async function listGames(opts: {
   );
   const total = countRow?.n ?? 0;
 
-  const rows = all<RawCard>(
+  const rows = await all<RawCard>(
     `${CARD_SELECT}${where} ${buildGameOrderBy(sort)} LIMIT ? OFFSET ?`,
     [...params, pageSize, (page - 1) * pageSize],
   );
@@ -253,7 +253,7 @@ export async function listGames(opts: {
 }
 
 export async function getGameCardBySlug(slug: string): Promise<GameCard | null> {
-  const row = one<RawCard>(`${CARD_SELECT} WHERE g.slug = ? AND g.status = 'published'`, [slug]);
+  const row = await one<RawCard>(`${CARD_SELECT} WHERE g.slug = ? AND g.status = 'published'`, [slug]);
   return row ? mapCard(row) : null;
 }
 
@@ -262,7 +262,7 @@ async function collect(
   order: string,
   limit: number,
 ): Promise<GameCard[]> {
-  const rows = all<RawCard>(
+  const rows = await all<RawCard>(
     `${CARD_SELECT} WHERE g.status = 'published'${extraWhere} ${order} LIMIT ?`,
     [limit],
   );
@@ -294,7 +294,7 @@ export async function getHomeCollections() {
 }
 
 export async function getSiteStats() {
-  const row = one<{
+  const row = await one<{
     games: number;
     trophies: number;
     guides: number;
@@ -310,7 +310,7 @@ export async function getSiteStats() {
 }
 
 export async function getAllGameSlugs() {
-  return all<{ slug: string; updatedAt: string }>(
+  return await all<{ slug: string; updatedAt: string }>(
     "SELECT slug, updated_at AS updatedAt FROM games WHERE status = 'published' ORDER BY updated_at DESC",
   );
 }
@@ -355,8 +355,34 @@ const DIFFICULTY_COLUMNS = `
   id, game_id AS gameId, kind, label, score, note, sort_order AS sortOrder
 `;
 
+/** Plataformas del juego, ya aplanadas al formato que consume la vista. */
+async function fetchGamePlatforms(gameId: string) {
+  const rows = await all<Row>(
+    `SELECT gp.game_id AS gameId, gp.platform_id AS platformId,
+            gp.shares_trophy_list AS sharesTrophyList, gp.notes,
+            p.slug AS platformSlug, p.name AS platformName,
+            p.short_name AS platformShortName, p.sort_order AS platformSortOrder
+       FROM game_platforms gp JOIN platforms p ON p.id = gp.platform_id
+      WHERE gp.game_id = ? ORDER BY p.sort_order`,
+    [gameId],
+  );
+  return rows.map((r) => ({
+    gameId: r.gameId as string,
+    platformId: r.platformId as string,
+    sharesTrophyList: Boolean(r.sharesTrophyList),
+    notes: (r.notes as string | null) ?? null,
+    platform: {
+      id: r.platformId as string,
+      slug: r.platformSlug as string,
+      name: r.platformName as string,
+      shortName: r.platformShortName as string,
+      sortOrder: (r.platformSortOrder as number) ?? 0,
+    },
+  }));
+}
+
 export async function getGameDetail(slug: string) {
-  const game = one<Game>(`SELECT ${GAME_COLUMNS} FROM games g WHERE g.slug = ? AND g.status = 'published'`, [
+  const game = await one<Game>(`SELECT ${GAME_COLUMNS} FROM games g WHERE g.slug = ? AND g.status = 'published'`, [
     slug,
   ]);
   if (!game) return null;
@@ -373,27 +399,7 @@ export async function getGameDetail(slug: string) {
             [game.publisherId],
           )
         : Promise.resolve(null),
-      all<Row>(
-        `SELECT gp.game_id AS gameId, gp.platform_id AS platformId,
-                gp.shares_trophy_list AS sharesTrophyList, gp.notes,
-                p.slug AS platformSlug, p.name AS platformName,
-                p.short_name AS platformShortName, p.sort_order AS platformSortOrder
-           FROM game_platforms gp JOIN platforms p ON p.id = gp.platform_id
-          WHERE gp.game_id = ? ORDER BY p.sort_order`,
-        [game.id],
-      ).map((r) => ({
-        gameId: r.gameId as string,
-        platformId: r.platformId as string,
-        sharesTrophyList: Boolean(r.sharesTrophyList),
-        notes: (r.notes as string | null) ?? null,
-        platform: {
-          id: r.platformId as string,
-          slug: r.platformSlug as string,
-          name: r.platformName as string,
-          shortName: r.platformShortName as string,
-          sortOrder: (r.platformSortOrder as number) ?? 0,
-        },
-      })),
+      fetchGamePlatforms(game.id),
       all<Row>(
         `SELECT r.*, p.slug AS platformSlug, p.short_name AS platformShortName, p.name AS platformName
            FROM game_releases r JOIN platforms p ON p.id = r.platform_id
@@ -446,7 +452,7 @@ export async function getGameDetail(slug: string) {
 
   // Trofeos de cada lista
   for (const list of trophyLists) {
-    list.entries = all<Row>(
+    list.entries = await all<Row>(
       `SELECT gt.id, gt.game_id AS gameId, gt.trophy_list_id AS trophyListId, gt.trophy_id AS trophyId,
               gt.sort_order AS sortOrder, gt.how_to AS howTo, gt.difficulty,
               gt.is_missable AS isMissable, gt.is_online AS isOnline,
@@ -464,13 +470,13 @@ export async function getGameDetail(slug: string) {
 
   // Fuentes y pasos de las guías
   for (const g of guides) {
-    g.steps = all<Row>(
+    g.steps = await all<Row>(
       `SELECT id, guide_id AS guideId, step_number AS stepNumber, title, body, warning,
               sort_order AS sortOrder
          FROM guide_steps WHERE guide_id = ? ORDER BY step_number`,
       [g.id],
     );
-    g.sources = all<Row>(
+    g.sources = await all<Row>(
       `SELECT gsr.id, gsr.url, gsr.scope, gsr.confidence, gsr.last_updated AS lastUpdated,
               gs.name AS sourceName, gs.slug AS sourceSlug, gs.homepage AS sourceHomepage,
               gs.usage_policy AS usagePolicy
@@ -508,7 +514,7 @@ export async function getRelatedGames(
     return collect("", "ORDER BY g.popularity DESC", limit);
   }
   const params: SqlParam[] = [gameId, ...categorySlugs];
-  const rows = all<RawCard>(
+  const rows = await all<RawCard>(
     `${CARD_SELECT}
       WHERE g.status = 'published' AND g.id <> ?
         AND EXISTS (SELECT 1 FROM game_categories gc JOIN categories c ON c.id = gc.category_id
@@ -532,7 +538,7 @@ export async function getGamesForComparison(slugs: string[]) {
   const unique = Array.from(new Set(slugs.filter(Boolean))).slice(0, 4);
   if (unique.length === 0) return [];
   const placeholders = unique.map(() => "?").join(",");
-  const rows = all<Row & { platformsJson: string; categoriesJson: string; platformDetailsJson: string }>(
+  const rows = await all<Row & { platformsJson: string; categoriesJson: string; platformDetailsJson: string }>(
     `SELECT ${GAME_COLUMNS},
             d.name AS developerName,
             (SELECT json_group_array(json_object('slug', p.slug, 'name', p.name, 'shortName', p.short_name))
@@ -555,24 +561,25 @@ export async function getGamesForComparison(slugs: string[]) {
   for (const slug of unique) {
     const g = bySlug.get(slug);
     if (!g) continue;
-    const times = all<Row>(
+    const times = await all<Row>(
       `SELECT ${TIME_COLUMNS} FROM game_times WHERE game_id = ? ORDER BY sort_order`,
       [g.id],
     );
-    const difficulties = all<Row>(
+    const difficulties = await all<Row>(
       `SELECT ${DIFFICULTY_COLUMNS} FROM difficulty_ratings WHERE game_id = ? ORDER BY sort_order`,
       [g.id],
     );
     const profile =
-      one<Row>(`SELECT ${PROFILE_COLUMNS} FROM platinum_profiles WHERE game_id = ?`, [g.id]) ?? null;
-    const lists = all<Row>(
+      (await one<Row>(`SELECT ${PROFILE_COLUMNS} FROM platinum_profiles WHERE game_id = ?`, [g.id])) ??
+      null;
+    const lists = await all<Row>(
       `SELECT id, game_id AS gameId, platform_id AS platformId, name, is_shared AS isShared,
               is_default AS isDefault, total_count AS totalCount, completeness, notes
          FROM trophy_lists WHERE game_id = ? ORDER BY is_default DESC`,
       [g.id],
     );
     for (const l of lists) {
-      l.trophies = all<Row>(
+      l.trophies = await all<Row>(
         `SELECT t.type AS type, t.name AS name, gt.is_missable AS isMissable,
                 gt.is_online AS isOnline, gt.difficulty AS difficulty
            FROM game_trophies gt JOIN trophies t ON t.id = gt.trophy_id
@@ -600,7 +607,7 @@ export async function searchGamesSuggest(query: string, limit = 8) {
   if (terms.length === 0) return [];
   const conds = terms.map(() => "g.search_text LIKE ?");
   const params: SqlParam[] = terms.map((t) => `%${t}%`);
-  return all<Row>(
+  const rows = await all<Row>(
     `SELECT g.id, g.slug, g.title, g.cover_image AS coverImage, g.accent_color AS accentColor,
             g.release_date AS releaseDate,
             d.name AS developerName,
@@ -612,7 +619,8 @@ export async function searchGamesSuggest(query: string, limit = 8) {
       WHERE g.status = 'published' AND ${conds.join(" AND ")}
       ORDER BY g.popularity DESC LIMIT ?`,
     [...params, limit],
-  ).map((r) => ({
+  );
+  return rows.map((r) => ({
     id: r.id,
     slug: r.slug,
     title: r.title,
@@ -629,5 +637,5 @@ export async function searchGamesSuggest(query: string, limit = 8) {
  *  (se prerenderiza) para no escribir en la base de datos durante el build. */
 export async function incrementView(gameId: string) {
   const { run } = await import("@/lib/db");
-  run("UPDATE games SET view_count = view_count + 1 WHERE id = ?", [gameId]);
+  await run("UPDATE games SET view_count = view_count + 1 WHERE id = ?", [gameId]);
 }
