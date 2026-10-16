@@ -59,15 +59,21 @@ export function Header({ user }: { user: HeaderUser }) {
           </span>
         </Link>
 
-        {/* Nav desktop */}
-        <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label="Principal">
+        {/*
+          Nav de escritorio. `min-w-0` + `overflow-hidden` evitan que una
+          etiqueta larga empuje el resto del encabezado hacia fuera.
+        */}
+        <nav
+          className="ml-4 hidden min-w-0 items-center gap-1 overflow-hidden md:flex"
+          aria-label="Principal"
+        >
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
                 isActive(item.href)
                   ? "bg-accent-600/15 text-accent-300"
                   : "text-base-300 hover:bg-base-800 hover:text-base-100",
@@ -78,46 +84,58 @@ export function Header({ user }: { user: HeaderUser }) {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/juegos" className="gh-btn gh-btn-ghost hidden text-xs sm:inline-flex">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Link
+            href="/juegos"
+            className="gh-btn gh-btn-ghost hidden whitespace-nowrap text-xs sm:inline-flex"
+          >
             Buscar juego
           </Link>
 
           {user ? (
-            <div className="hidden items-center gap-1.5 md:flex">
+            // Los botones de cuenta solo caben en linea a partir de xl (1280px).
+            // Por debajo, logotipo + nav + botones desbordaban la pagina hacia
+            // la derecha; el menu desplegable cubre ese hueco.
+            <div className="hidden items-center gap-1.5 xl:flex">
               {(user.role === "admin" || user.role === "moderator") && (
                 <Link
                   href="/admin"
-                  className="gh-btn gh-btn-ghost text-xs"
+                  className="gh-btn gh-btn-ghost whitespace-nowrap text-xs"
                   title="Panel de administración"
                 >
                   <IconSettings size={15} />
                   Admin
                 </Link>
               )}
-              <Link href="/perfil" className="gh-btn gh-btn-ghost text-xs">
+              <Link
+                href="/perfil"
+                className="gh-btn gh-btn-ghost max-w-[10rem] truncate whitespace-nowrap text-xs"
+              >
                 <IconUser size={15} />
                 {user.displayName ?? user.username}
               </Link>
             </div>
           ) : (
-            <div className="hidden items-center gap-1.5 md:flex">
-              <Link href="/login" className="gh-btn gh-btn-ghost text-xs">
+            <div className="hidden items-center gap-1.5 xl:flex">
+              <Link href="/login" className="gh-btn gh-btn-ghost whitespace-nowrap text-xs">
                 Entrar
               </Link>
-              <Link href="/registro" className="gh-btn gh-btn-primary text-xs">
+              <Link
+                href="/registro"
+                className="gh-btn gh-btn-primary whitespace-nowrap text-xs"
+              >
                 Crear cuenta
               </Link>
             </div>
           )}
 
-          {/* Botón menú móvil */}
+          {/* Botón de menú: visible por debajo de xl */}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
-            className="gh-btn gh-btn-ghost p-2 md:hidden"
+            className="gh-btn gh-btn-ghost shrink-0 p-2 xl:hidden"
           >
             {open ? <IconMenu size={18} className="rotate-90" /> : <IconMenu size={18} />}
           </button>
@@ -126,7 +144,7 @@ export function Header({ user }: { user: HeaderUser }) {
 
       {/* Menú móvil */}
       {open && (
-        <div className="border-t border-base-700 bg-base-900 md:hidden">
+        <div className="border-t border-base-700 bg-base-900 xl:hidden">
           <nav className="gh-container flex flex-col gap-1 py-4" aria-label="Menú móvil">
             {NAV.map((item) => (
               <Link
