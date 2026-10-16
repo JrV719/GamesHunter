@@ -14,6 +14,8 @@ export const GHOST_OF_TSUSHIMA: GameSeed = {
   date: "2020-07-17",
   color: "#38bdf8",
   url: "https://www.playstation.com/es-es/games/ghost-of-tsushima/",
+  cover: "/covers/ghost-of-tsushima.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2215430).",
   pop: 1080,
   rec: "Historia corta y bien medida, mapa amplio y un platino de recorrido sin casi ningun riesgo.",
   platforms: [

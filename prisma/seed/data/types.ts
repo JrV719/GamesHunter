@@ -48,6 +48,14 @@ export type GameSeed = {
   date: string;
   color: string;
   url?: string;
+  /**
+   * Portada servida desde /public. La deja `scripts/fetch-covers.mjs`, que la
+   * descarga del CDN de la tienda de Steam y la verifica antes de guardarla.
+   * Sin portada, la aplicación dibuja una propia con el color del juego.
+   */
+  cover?: string;
+  /** De dónde procede la imagen, para poder citarla. */
+  coverFrom?: string;
   dataStatus?: "verified" | "provisional" | "demo";
   pop?: number;
   rec?: string;
@@ -113,12 +121,14 @@ export type FullTrophy = {
   isDLC: boolean;
 };
 
-export type FullGame = Omit<GameSeed, "dev" | "pub" | "date" | "color" | "url" | "pop" | "rec" | "platforms" | "categories" | "times" | "difficulties" | "profile" | "list" | "guide" | "sources" | "dataStatus"> & {
+export type FullGame = Omit<GameSeed, "dev" | "pub" | "date" | "color" | "url" | "cover" | "coverFrom" | "pop" | "rec" | "platforms" | "categories" | "times" | "difficulties" | "profile" | "list" | "guide" | "sources" | "dataStatus"> & {
   developer: string;
   publisher?: string;
   releaseDate: string;
   accentColor: string;
   officialUrl?: string;
+  coverImage?: string;
+  coverSource?: string;
   dataStatus: string;
   popularity: number;
   recommended: boolean;
@@ -152,6 +162,8 @@ export function normalize(g: GameSeed): FullGame {
     releaseDate: g.date,
     accentColor: g.color,
     officialUrl: g.url,
+    coverImage: g.cover,
+    coverSource: g.coverFrom,
     dataStatus: g.dataStatus ?? "provisional",
     popularity: g.pop ?? 100,
     recommended: Boolean(g.rec),

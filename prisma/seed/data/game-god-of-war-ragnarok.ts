@@ -14,6 +14,8 @@ export const GOD_OF_WAR_RAGNAROK: GameSeed = {
   date: "2022-11-09",
   color: "#818cf8",
   url: "https://www.playstation.com/es-es/games/god-of-war-ragnarok/",
+  cover: "/covers/god-of-war-ragnarok.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2322010).",
   pop: 1120,
   rec: "Gran historia y mucho contenido. El platino sube por el volumen de coleccionables, no por los perdibles.",
   platforms: [

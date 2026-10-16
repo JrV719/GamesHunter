@@ -14,6 +14,8 @@ export const SPIDER_MAN_2: GameSeed = {
   date: "2023-10-20",
   color: "#f43f5e",
   url: "https://www.playstation.com/es-es/games/marvels-spider-man-2/",
+  cover: "/covers/marvels-spider-man-2.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2651280).",
   pop: 890,
   rec: "Platino muy accesible pese al volumen de coleccionables: el mapa esta bien guiado y no hay nada que se pierda.",
   platforms: [

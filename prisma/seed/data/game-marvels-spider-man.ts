@@ -14,6 +14,8 @@ export const SPIDER_MAN: GameSeed = {
   date: "2018-09-07",
   color: "#ef4444",
   url: "https://www.playstation.com/es-es/games/marvels-spider-man/",
+  cover: "/covers/marvels-spider-man.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 1817070).",
   pop: 1050,
   rec: "Platino muy approachable: sin perdibles, sin online y con un mapa facil de completar gracias al Guided Tour.",
   platforms: [

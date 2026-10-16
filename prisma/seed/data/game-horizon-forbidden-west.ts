@@ -14,6 +14,8 @@ export const HORIZON_FORBIDDEN_WEST: GameSeed = {
   date: "2022-02-25",
   color: "#22d3ee",
   url: "https://www.playstation.com/es-es/games/horizon-forbidden-west/",
+  cover: "/covers/horizon-forbidden-west.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2420110).",
   pop: 970,
   rec: "Muy buen equilibrio entre dificultad y tiempo: sin perdibles y con trofeos de dificultad opcional bien marcados.",
   platforms: [

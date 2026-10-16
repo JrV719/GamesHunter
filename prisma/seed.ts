@@ -163,6 +163,7 @@ for (const raw of GAMES) {
       iso(g.releaseDate),
       g.accentColor,
       g.officialUrl ?? null,
+      g.coverImage ?? null,
       g.dataStatus,
       g.popularity,
       g.recommended ? 1 : 0,
@@ -172,17 +173,19 @@ for (const raw of GAMES) {
     if (existing) {
       db.prepare(
         `UPDATE games SET title = ?, tagline = ?, summary = ?, description = ?, developer_id = ?,
-                publisher_id = ?, release_date = ?, accent_color = ?, official_url = ?, data_status = ?,
-                popularity = ?, is_recommended = ?, recommendation_note = ?, search_text = ?, status = 'published',
+                publisher_id = ?, release_date = ?, accent_color = ?, official_url = ?,
+                cover_image = COALESCE(?, cover_image), data_status = ?,
+                popularity = ?, is_recommended = ?, recommendation_note = ?, search_text = ?,
+                status = 'published',
                 updated_at = ?
           WHERE id = ?`,
       ).run(...base, now(), gameId);
     } else {
       db.prepare(
         `INSERT INTO games (id, slug, title, tagline, summary, description, developer_id, publisher_id,
-                release_date, accent_color, official_url, data_status, popularity, is_recommended,
-                recommendation_note, search_text, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)`,
+                release_date, accent_color, official_url, cover_image, data_status, popularity,
+                is_recommended, recommendation_note, search_text, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)`,
       ).run(gameId, g.slug, ...base, now(), now());
     }
 

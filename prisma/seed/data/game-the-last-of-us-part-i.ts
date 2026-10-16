@@ -14,6 +14,8 @@ export const TLOU_PART_I: GameSeed = {
   date: "2013-06-14",
   color: "#a78bfa",
   url: "https://www.playstation.com/es-es/games/the-last-of-us-part-i/",
+  cover: "/covers/the-last-of-us-part-i.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 1888930).",
   pop: 1010,
   rec: "Uno de los platinos mas tranquilos: lista corta, sin perdibles y con muy poco contenido opcional obligatorio.",
   platforms: [

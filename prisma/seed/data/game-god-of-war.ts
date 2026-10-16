@@ -14,6 +14,8 @@ export const GOD_OF_WAR: GameSeed = {
   date: "2018-04-20",
   color: "#38bdf8",
   url: "https://www.playstation.com/es-es/games/god-of-war/",
+  cover: "/covers/god-of-war.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 1593500).",
   pop: 980,
   rec: "Uno de los mejores platinos de PS4: sin trofeos perdibles, sin online y con un ritmo de historia muy asumible.",
   platforms: [

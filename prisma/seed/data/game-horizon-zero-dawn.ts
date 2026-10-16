@@ -14,6 +14,8 @@ export const HORIZON_ZERO_DAWN: GameSeed = {
   date: "2017-02-28",
   color: "#22d3ee",
   url: "https://www.playstation.com/es-es/games/horizon-zero-dawn/",
+  cover: "/covers/horizon-zero-dawn.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2561580).",
   pop: 940,
   platforms: [
     {

@@ -14,6 +14,8 @@ export const TLOU_PART_II: GameSeed = {
   date: "2020-06-19",
   color: "#a78bfa",
   url: "https://www.playstation.com/es-es/games/the-last-of-us-part-ii/",
+  cover: "/covers/the-last-of-us-part-ii.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 2531310).",
   pop: 930,
   platforms: [
     { slug: "ps4", date: "2020-06-19", original: true, notes: "Exclusivo de PS4 en el momento del lanzamiento." },

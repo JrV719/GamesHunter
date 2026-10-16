@@ -74,9 +74,35 @@ npm start            # servidor de producción
 npm run db:seed      # vuelve a sembrar (idempotente, no duplica)
 npm run db:reset     # borra el SQLite y recrea el esquema (parar el servidor antes)
 npm run db:export    # vuelca el contenido local a prisma/export.sql
+npm run covers       # vuelve a descargar y verificar las portadas en public/covers
 npm run typecheck    # comprueba los tipos
 npm run smoke        # comprueba que todas las rutas y los controles de acceso responden
 ```
+
+### Portadas de los juegos
+
+Cada ficha tiene su propia portada. La imagen se guarda en `public/covers/` y la
+columna `cover_image` de la tabla `games` la referencia.
+
+Origen: el CDN público de la tienda de Steam, usando el identificador de
+aplicación de cada juego. Steam es la plataforma que publica la mayoría de estos
+títulos en PC, su API es oficial y no hace falta clave. Se toma la vertical de
+600x900 (proporcion 2:3), la que se usa como portada en los sitios de trofeos.
+
+`npm run covers` **no se fia de ninguna direccion**: antes de descargar comprueba
+el `appid` contra el nombre del juego en la API de detalles de Steam, y despues
+valida el fichero recibido (tipo MIME, tamano y dimensiones reales del JPEG). Si
+algo no cuadra no escribe nada, y ese juego se queda con la portada generada por
+la aplicacion.
+
+**Dos juegos no tienen portada descargable:** Bloodborne y Demon's Souls son
+exclusivos de PlayStation, no estan en Steam, y la tienda de PlayStation no
+ofrece un JSON publico del que obtenerlas. Sus tarjetas usan la portada generada
+por la aplicacion, que es distinta para cada juego (tono e iniciales propios a
+partir de su color de acento), no una imagen repetida.
+
+Las imagenes se sirven con `next/image`, que las reescala y las convierte a
+AVIF/WebP: una portada de 160 kB se entrega en unos 26 kB dentro de una tarjeta.
 
 ---
 

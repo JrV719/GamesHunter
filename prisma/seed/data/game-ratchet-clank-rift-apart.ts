@@ -14,6 +14,8 @@ export const RATCHET_CLANK_RIFT_APART: GameSeed = {
   date: "2021-06-10",
   color: "#f97316",
   url: "https://www.playstation.com/es-es/games/ratchet-clank-rift-apart/",
+  cover: "/covers/ratchet-clank-rift-apart.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 1895880).",
   pop: 640,
   rec: "Uno de los platinos mas rapidos de PS5: historia corta, sin perdibles y sin online. Ideal para empezar en la plataforma.",
   platforms: [

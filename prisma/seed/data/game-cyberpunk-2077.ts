@@ -13,6 +13,8 @@ export const CYBERPUNK_2077: GameSeed = {
   date: "2020-12-10",
   color: "#facc15",
   url: "https://www.playstation.com/es-es/games/cyberpunk-2077/",
+  cover: "/covers/cyberpunk-2077.jpg",
+  coverFrom: "Portada vertical publicada por la tienda de Steam (appid 1091500).",
   pop: 1150,
   platforms: [
     { slug: "ps4", date: "2020-12-10", original: true },
