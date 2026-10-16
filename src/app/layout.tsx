@@ -4,7 +4,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import "./globals.css";
 
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "GamesHunter";
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Games Hunter";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {

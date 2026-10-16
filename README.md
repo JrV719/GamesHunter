@@ -1,4 +1,4 @@
-# GamesHunter
+# Games Hunter
 
 Base de datos y guías de trofeos de **PlayStation 4 y PlayStation 5**.
 Busca un juego y consulta, en segundos: dificultad del Platino, tiempos por tramo,
@@ -357,7 +357,7 @@ Spider-Man, Marvel's Spider-Man 2, Ghost of Tsushima, Horizon Zero Dawn, Horizon
 Forbidden West, The Last of Us Part I, The Last of Us Part II, Cyberpunk 2077,
 Bloodborne, Demon's Souls y Ratchet & Clank: Rift Apart.
 
-**Honestidad de los datos.** GamesHunter distingue tres estados y los muestra en
+**Honestidad de los datos.** Games Hunter distingue tres estados y los muestra en
 cada ficha:
 
 - **Verificado** — dato objetivo y comprobable (nº de trofeos, plataformas,
@@ -404,7 +404,7 @@ Copia `.env.example` a `.env`.
 | `DATABASE_URL` | `file:./dev.db` | `file:…` para SQLite local; `libsql://…` para Turso. |
 | `DATABASE_AUTH_TOKEN` | — | **Obligatorio** si `DATABASE_URL` es remoto. |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Base para canonical, OG y sitemap. |
-| `NEXT_PUBLIC_SITE_NAME` | `GamesHunter` | Nombre del sitio. |
+| `NEXT_PUBLIC_SITE_NAME` | `Games Hunter` | Nombre del sitio. |
 | `SESSION_SECRET` | *(dev)* | Clave de firma de cookies. **Cámbiala en producción.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_USERNAME` | `admin@gameshunter.app` / `gameshunter` / `admin` | Cuenta que crea el seed. |
 | `SEED_DEMO_DATA` | `true` | Interruptor para los juegos de ejemplo. Los temas del foro se siembran siempre. |

@@ -1,8 +1,8 @@
 {
-  "name": "gameshunter",
+  "name": "games-hunter",
   "version": "1.0.0",
   "private": true,
-  "description": "GamesHunter - Base de datos y guias de trofeos de PS4 y PS5",
+  "description": "Games Hunter - Base de datos y guias de trofeos de PS4 y PS5",
   "engines": {
     "node": ">=22.5.0"
   },

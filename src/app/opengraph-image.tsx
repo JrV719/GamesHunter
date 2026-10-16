@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "GamesHunter — Encuentra tu próximo platino";
+export const alt = "Games Hunter — Encuentra tu próximo platino";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,7 +39,7 @@ export default function OpengraphImage() {
             🏆
           </div>
           <div style={{ fontSize: 56, fontWeight: 800, letterSpacing: -1 }}>
-            GamesHunter
+            Games Hunter
           </div>
         </div>
 

@@ -45,13 +45,13 @@ export function Header({ user }: { user: HeaderUser }) {
     <header className="sticky top-0 z-40 border-b border-base-700/80 bg-base-900/85 backdrop-blur-xl">
       <div className="gh-container flex h-16 items-center gap-3">
         {/* Logo */}
-        <Link href="/" className="group flex shrink-0 items-center gap-2.5" aria-label="GamesHunter">
+        <Link href="/" className="group flex shrink-0 items-center gap-2.5" aria-label="Games Hunter">
           <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-accent-500 to-brand-600 shadow-[0_6px_20px_-8px_rgb(56_189_248/.8)]">
             <IconTrophy size={19} className="text-white" />
           </span>
           <span className="flex flex-col leading-none">
             <span className="text-[15px] font-black tracking-tight text-base-100">
-              Games<span className="text-accent-400">Hunter</span>
+              Games<span className="text-accent-400">&nbsp;Hunter</span>
             </span>
             <span className="mt-0.5 hidden text-[10px] font-medium text-base-400 sm:block">
               Encuentra tu próximo platino

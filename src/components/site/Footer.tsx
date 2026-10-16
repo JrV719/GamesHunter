@@ -50,7 +50,7 @@ export async function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <p className="text-base font-black tracking-tight text-base-100">
-              Games<span className="text-accent-400">Hunter</span>
+              Games<span className="text-accent-400">&nbsp;Hunter</span>
             </p>
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-base-400">
               Base de datos y guías de trofeos de PlayStation 4 y PlayStation 5. Dificultad del
@@ -116,7 +116,7 @@ export async function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-base-700/70 pt-6 text-xs text-base-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {year} GamesHunter. Datos orientativos basados en guías públicas de la comunidad.</p>
+          <p>© {year} Games Hunter. Datos orientativos basados en guías públicas de la comunidad.</p>
           <p>
             La información de trofeos se resume con texto propio y enlaza a su fuente original.
             Cada ficha indica su nivel de confianza.
