@@ -15,7 +15,16 @@ function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 16) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("SESSION_SECRET no configurado o demasiado corto.");
+      // Se deja claro qué variable falta: en Vercel esto solía aparecer como un
+      // error 500 sin explicación en el login.
+      console.error(
+        "[GamesHunter] SESSION_SECRET no configurada o demasiado corta: " +
+          "el registro y el inicio de sesión no funcionarán.",
+      );
+      throw new Error(
+        "SESSION_SECRET no configurada (mínimo 16 caracteres). Defínela en el proyecto de " +
+          "Vercel con `node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"`.",
+      );
     }
     return "dev-only-insecure-secret";
   }
@@ -142,32 +151,46 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  if (!verifySignature(token)) return null;
 
-  const row = await one<{
-    id: string;
-    email: string;
-    username: string;
-    display_name: string | null;
-    role: string;
-    avatar_url: string | null;
-    status: string;
-  }>(
-    `SELECT u.id, u.email, u.username, u.display_name, u.role, u.avatar_url, u.status
-       FROM sessions s JOIN users u ON u.id = s.user_id
-      WHERE s.token = ? AND s.expires_at > ?`,
-    [token, now()],
-  );
-  if (!row || row.status !== "active") return null;
+  // Esta función se llama desde el layout raíz, así que si lanza una excepción
+  // se cae TODA la web (incluidas las rutas que no necesitan sesión) y el
+  // usuario ve una pantalla en blanco. Un problema para leer la sesión debe
+  // dejar la visita como anónima, no tumbar el sitio; el fallo real queda en
+  // los registros con su traza.
+  try {
+    if (!verifySignature(token)) return null;
 
-  return {
-    id: row.id,
-    email: row.email,
-    username: row.username,
-    displayName: row.display_name,
-    role: row.role as UserRole,
-    avatarUrl: row.avatar_url,
-  };
+    const row = await one<{
+      id: string;
+      email: string;
+      username: string;
+      display_name: string | null;
+      role: string;
+      avatar_url: string | null;
+      status: string;
+    }>(
+      `SELECT u.id, u.email, u.username, u.display_name, u.role, u.avatar_url, u.status
+         FROM sessions s JOIN users u ON u.id = s.user_id
+        WHERE s.token = ? AND s.expires_at > ?`,
+      [token, now()],
+    );
+    if (!row || row.status !== "active") return null;
+
+    return {
+      id: row.id,
+      email: row.email,
+      username: row.username,
+      displayName: row.display_name,
+      role: row.role as UserRole,
+      avatarUrl: row.avatar_url,
+    };
+  } catch (e) {
+    console.error(
+      "[GamesHunter] No se pudo resolver la sesión; se continúa como anónimo:",
+      (e as Error).message,
+    );
+    return null;
+  }
 });
 
 export async function isAdmin() {

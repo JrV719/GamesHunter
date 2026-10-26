@@ -1,4 +1,39 @@
 /** @type {import('next').NextConfig} */
+
+// ---------------------------------------------------------------------------
+// Aviso temprano de configuración (Vercel)
+// ---------------------------------------------------------------------------
+// Las funciones de Vercel se ejecutan con el sistema de ficheros de sólo
+// lectura, así que la base SQLite local (`file:./dev.db`) no se puede abrir
+// allí. Sin esta comprobación el síntoma es un «unable to open database file»
+// repetido en los registros, sin pistas sobre la causa.
+const vercelBuild = Boolean(process.env.VERCEL);
+const isBuildCommand = process.argv.some((arg) => arg === "build");
+const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
+const localDatabase = databaseUrl === "" || databaseUrl.startsWith("file:");
+
+if (isBuildCommand && vercelBuild && localDatabase) {
+  console.warn(
+    [
+      "",
+      "=".repeat(78),
+      "  GAMES HUNTER — AVISO DE CONFIGURACIÓN",
+      "=".repeat(78),
+      "  DATABASE_URL no apunta a una base remota, y Vercel no puede usar SQLite local.",
+      "",
+      "  Configura en Settings → Environment Variables (Production y Preview):",
+      "    DATABASE_URL         = libsql://<tu-base>.turso.io",
+      "    DATABASE_AUTH_TOKEN  = <token de `turso db tokens create <base>`>",
+      "    SESSION_SECRET       = <64 caracteres aleatorios>",
+      "",
+      "  El despliegue se generará, pero la web mostrará un error hasta entonces.",
+      "  Comprueba el estado en /api/health tras desplegar.",
+      "=".repeat(78),
+      "",
+    ].join("\n"),
+  );
+}
+
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,

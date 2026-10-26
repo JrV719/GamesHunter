@@ -114,15 +114,50 @@ vercel link
 vercel --prod
 ```
 
-Variables de entorno en el proyecto de Vercel:
+### Variables de entorno (obligatorias en producción)
 
-| Variable | Valor |
+Se configuran en **Vercel → Settings → Environment Variables** y hay que
+marcarlas para *Production*, *Preview* y *Development*. Cada variable añadida
+requiere un nuevo despliegue para aplicarse.
+
+| Variable | Obligatoria | Valor | Para qué sirve |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | **Sí** | `libsql://<tu-base>.turso.io` | Apunta a la base de Turso. Sin ella el catálogo no se puede leer. |
+| `DATABASE_AUTH_TOKEN` | **Sí** | Token de `npx turso db tokens create <base>` | Autenticación contra Turso. |
+| `SESSION_SECRET` | **Sí** | 64 caracteres aleatorios | Firma las cookies de sesión (login, registro, comunidad). |
+| `NEXT_PUBLIC_SITE_URL` | No | `https://tu-dominio.com` | URLs canónicas, Open Graph, `robots.txt` y `sitemap.xml`. Si se omite se usa el dominio que Vercel inyecta. |
+| `NEXT_PUBLIC_SITE_NAME` | No | `Games Hunter` | Nombre visible del sitio. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_USERNAME` | No | — | Administrador inicial que crea el seed. |
+
+> **El error «Application error: a server-side exception has occurred» casi
+> siempre significa que falta `DATABASE_URL`.** Las funciones de Vercel se
+> ejecutan con el sistema de ficheros de sólo lectura, así que la base SQLite
+> local (`file:./dev.db`) no se puede crear ni abrir allí. GamesHunter lo
+> detecta y lo dice en los registros, en lugar de fallar en silencio.
+
+### Síntomas y causa
+
+| Lo que ves | Causa |
 | --- | --- |
-| `DATABASE_URL` | `libsql://<tu-base>.turso.io` |
-| `DATABASE_AUTH_TOKEN` | Token generado por `npx turso db tokens create <base>` |
-| `SESSION_SECRET` | 64 caracteres aleatorios (obligatorio) |
-| `NEXT_PUBLIC_SITE_URL` | `https://tu-dominio.com` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta del primer administrador |
+| `Error: unable to open database file` en los registros, en `/` y en `/favicon.ico` | `DATABASE_URL` no existe (o es `file:...`) y SQLite intenta abrir un fichero en un disco de sólo lectura. |
+| «Application error: a server-side exception has occurred» | Lo mismo, en la versión anterior: la excepción subía hasta el layout raíz y no había frontera de error. |
+| `/sitemap.xml` sólo con las 7 URLs base y `og:url` en `localhost:3000` | Build sin variables de entorno: se prerenderizó con la base local vacía. |
+
+`/favicon.ico` aparece en los registros porque **no existía el icono**: la petición
+caía en el 404, que se renderiza con el layout raíz y por tanto consultaba la base
+de datos. Ahora hay `src/app/favicon.ico` y `src/app/icon.svg`, así que el icono
+se sirve como fichero estático y no toca la base.
+
+### Qué hacer
+
+1. Crear la base en Turso (ver más abajo) y copiar su URL y su token.
+2. Añadir `DATABASE_URL`, `DATABASE_AUTH_TOKEN` y `SESSION_SECRET` en Vercel.
+3. **Volver a desplegar** (las variables no se aplican a despliegues ya hechos).
+4. Abrir `/api/health`: debe responder `200` con `"ok": true`.
+
+Si `/api/health` devuelve `503`, el campo `detail` de cada comprobación dice
+exactamente qué falta. Los registros de la función empiezan por `[GamesHunter]`
+y nunca incluyen valores de credenciales.
 
 Para crear la base de Turso:
 
@@ -131,9 +166,28 @@ npx turso db create gameshunter
 npx turso db tokens create gameshunter --type jwt
 ```
 
+Genera el secreto de sesión con:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
 **No hace falta ejecutar migraciones en Vercel.** La primera conexión detecta que
 faltan tablas y aplica `database/schema.sql` automáticamente (todo el esquema usa
 `IF NOT EXISTS`, así que es idempotente y también sirve para una base ya existente).
+
+### Comprobar el despliegue
+
+Hay una sonda de diagnóstico en **`/api/health`** que responde `200` si todo lo
+obligatorio está correcto y `503` si falta algo:
+
+```bash
+curl -s https://tu-dominio.com/api/health
+```
+
+Devuelve qué variables están definidas (nunca sus valores) y una consulta real a
+la base, con el número de juegos del catálogo. Es la forma más rápida de
+descartar un problema de configuración sin mirar los registros.
 
 Para llevar contenido a producción:
 

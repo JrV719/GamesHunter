@@ -78,6 +78,86 @@ export function dbDescription(): string {
 }
 
 // ----------------------------------------------------------------------------
+// Diagnóstico de configuración
+// ----------------------------------------------------------------------------
+
+/**
+ * La base de datos no está disponible. No es un fallo de la aplicación sino de
+ * configuración del despliegue, así que se distingue del resto de errores para
+ * poder mostrar un mensaje accionable en lugar de una pantalla en blanco.
+ */
+export class DatabaseUnavailableError extends Error {
+  readonly hint: string;
+  constructor(message: string, hint: string) {
+    super(message);
+    this.name = "DatabaseUnavailableError";
+    this.hint = hint;
+    // Se escribe en stderr a propósito: es lo que aparece en los Runtime Logs
+    // de Vercel, donde se puede ver por qué la web no arranca.
+    console.error(`[GamesHunter] Base de datos no disponible: ${message}\n${hint}`);
+  }
+}
+
+/**
+ * ¿El código se está ejecutando en una función serverless (Vercel)?
+ *
+ * Ahí el sistema de ficheros es de sólo lectura y no hay disco persistente, así
+ * que un SQLite local no se puede ni crear ni abrir. Por eso el valor por
+ * defecto `file:./dev.db` sólo es válido en desarrollo.
+ */
+export function isServerlessRuntime(): boolean {
+  return Boolean(process.env.VERCEL);
+}
+
+/** ¿Estamos dentro de `next build`? Next lo expone en `NEXT_PHASE`. */
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
+/** ¿`DATABASE_URL` apunta a un motor local de ficheros? */
+export function usesLocalFile(): boolean {
+  const url = process.env.DATABASE_URL?.trim();
+  return !url || url.startsWith("file:");
+}
+
+const CONFIG_HINT = [
+  "Configura en el proyecto de Vercel (Settings → Environment Variables):",
+  "  DATABASE_URL          = libsql://<tu-base>.turso.io",
+  "  DATABASE_AUTH_TOKEN   = <token de `npx turso db tokens create <base>`>",
+  "SESSION_SECRET también es obligatorio en producción para poder iniciar sesión.",
+  "Ver README.md §3 «Despliegue en Vercel».",
+].join("\n");
+
+/**
+ * Valida la configuración ANTES de tocar el disco o la red.
+ *
+ * Sin esto, una variable ausente hace que `sqliteHandle()` intente crear
+ * `prisma/dev.db` dentro de `/var/task` (sólo lectura) y revienta con un
+ * `EROFS` críptico que en producción se ve como «Application error».
+ *
+ * Durante el build NO se aborta: se avisa y se deja compilar. Así el despliegue
+ * llega a publicarse y `/api/health` puede explicar qué falta, en vez de dejar
+ * al usuario con un «Build failed» sin forma de diagnosticarlo. En tiempo de
+ * petición sí se lanza, para no servir páginas vacías como si todo fuera bien.
+ */
+function assertDbConfigured(): void {
+  if (!isServerlessRuntime()) return;
+  if (!usesLocalFile()) return;
+
+  if (isBuildPhase()) {
+    // El aviso ya lo imprime next.config.mjs al arrancar el build; aquí sólo
+    // se evita abortar para que el despliegue llegue a publicarse.
+    return;
+  }
+
+  throw new DatabaseUnavailableError(
+    "DATABASE_URL no está configurada: en Vercel no puede usarse la base SQLite local " +
+      "(el sistema de ficheros de las funciones es de sólo lectura).",
+    CONFIG_HINT,
+  );
+}
+
+// ----------------------------------------------------------------------------
 // Handle del motor activo
 // ----------------------------------------------------------------------------
 
@@ -203,19 +283,57 @@ async function sqliteHandle(): Promise<DbHandle> {
 // Driver 2: Turso / libSQL sobre HTTP (Vercel)
 // ---------------------------------------------------------------------------
 
+/**
+ * Carga el cliente HTTP de libSQL.
+ *
+ * Se usa `await import()` y no el `require` desnudo a propósito: el `require`
+ * sólo existe si el bundle se emite como CommonJS (lo que hace webpack). Con
+ * Turbopack o cualquier salida ESM el `require` no está definido y saltaría un
+ * `ReferenceError` en cada petición. Como `@libsql/client` está en
+ * `serverExternalPackages`, la importación dinámica se resuelve en runtime
+ * desde `node_modules` en los dos casos.
+ *
+ * Además, al no ser un `import` estático, el compilador no tiene que cargar los
+ * tipos profundamente genéricos del paquete (ver la nota de LibsqlClient).
+ */
+async function loadLibsqlHttp(): Promise<{
+  createClient(cfg: { url: string; authToken?: string }): LibsqlClient;
+}> {
+  const specifier = "@libsql/client/http";
+  const mod = (await import(/* webpackIgnore: true */ specifier)) as unknown as {
+    createClient(cfg: { url: string; authToken?: string }): LibsqlClient;
+  };
+  if (typeof mod?.createClient !== "function") {
+    throw new Error("el módulo no exporta createClient");
+  }
+  return mod;
+}
+
 async function libsqlHandle(): Promise<DbHandle> {
   if (!g().__ghLibsql) {
     // Se carga el cliente HTTP puro a propósito: `@libsql/client` (node)
     // arrastra el binding nativo `libsql`, que no existe en Vercel.
-    // `require` (y no `import`) mantiene los tipos del paquete fuera del
-    // compilador; ver la nota de LibsqlClient arriba.
-    const mod = require("@libsql/client/http") as {
-      createClient(cfg: { url: string; authToken?: string }): LibsqlClient;
-    };
-    g().__ghLibsql = mod.createClient({
-      url: resolveDbUrl(),
-      authToken: process.env.DATABASE_AUTH_TOKEN,
-    });
+    let mod: { createClient(cfg: { url: string; authToken?: string }): LibsqlClient };
+    try {
+      mod = await loadLibsqlHttp();
+    } catch (cause) {
+      throw new DatabaseUnavailableError(
+        "No se pudo cargar el cliente de Turso/libSQL (@libsql/client/http).",
+        "Comprueba que las dependencias estén instaladas y que DATABASE_URL apunte a una " +
+          `base de Turso válida. Detalle: ${describeError(cause)}`,
+      );
+    }
+    try {
+      g().__ghLibsql = mod.createClient({
+        url: resolveDbUrl(),
+        authToken: process.env.DATABASE_AUTH_TOKEN,
+      });
+    } catch (cause) {
+      throw new DatabaseUnavailableError(
+        `DATABASE_URL no es válida: ${describeError(cause)}`,
+        CONFIG_HINT,
+      );
+    }
   }
   const client = g().__ghLibsql as LibsqlClient;
 
@@ -317,7 +435,23 @@ async function baseHandle(): Promise<DbHandle> {
         "cambia la variable a libsql://... o consulta la sección «Migrar a PostgreSQL» del README.",
     );
   }
-  const handle = dbKind() === "sqlite" ? await sqliteHandle() : await libsqlHandle();
+  // Falla rápido y con un mensaje útil si el despliegue no tiene base de datos.
+  assertDbConfigured();
+
+  let handle: DbHandle;
+  try {
+    handle = dbKind() === "sqlite" ? await sqliteHandle() : await libsqlHandle();
+  } catch (e) {
+    // `EROFS`/`EACCES`/`ENOSPC` = se intentó usar SQLite local en un entorno de
+    // sólo lectura. Es un problema de configuración, no de la aplicación.
+    if (/EROFS|EACCES|ENOSPC|EPERM|read-only/i.test(describeError(e))) {
+      throw new DatabaseUnavailableError(
+        "No se pudo abrir la base de datos local: el sistema de ficheros es de sólo lectura.",
+        CONFIG_HINT,
+      );
+    }
+    throw e;
+  }
   g().__ghBase = handle;
   return handle;
 }
@@ -347,14 +481,51 @@ async function connect(): Promise<DbHandle> {
   try {
     await base.all("SELECT id FROM users LIMIT 1", []);
   } catch (e) {
-    if (/no such table|SQLITE_UNKNOWN|does not exist/i.test(describeError(e))) {
-      await base.exec(readSchemaSql());
+    const detail = describeError(e);
+    if (/no such table|SQLITE_UNKNOWN|does not exist/i.test(detail)) {
+      // Falta el esquema: se aplica database/schema.sql (idempotente).
+      await applySchemaFile(base);
+    } else if (/HTTP status 404|not found/i.test(detail)) {
+      // Turso responde 404 cuando el host o la base no existen.
+      throw new DatabaseUnavailableError(
+        `Turso no encuentra la base de datos indicada (${detail.trim()}).`,
+        `Comprueba que DATABASE_URL sea exactamente la del panel de Turso ` +
+          "(`turso db show <base> --url`). Ahora mismo apunta a: " +
+          `${resolveDbUrl().replace(/\/\/[^/]*@/, "//")}.`,
+      );
+    } else if (/SQLITE_AUTH|unauthorized|forbidden|401|403/i.test(detail)) {
+      throw new DatabaseUnavailableError(
+        `Turso rechazó la petición: ${detail.trim()}`,
+        "DATABASE_AUTH_TOKEN no válido, caducado o sin permisos sobre la base. " +
+          "Genera uno nuevo con `turso db tokens create <base>`.",
+      );
+    } else if (/fetch failed|ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ETIMEDOUT|network|SERVER_ERROR/i.test(detail)) {
+      throw new DatabaseUnavailableError(
+        `No se pudo contactar con la base de datos: ${detail.trim()}`,
+        `Comprueba que DATABASE_URL (${resolveDbUrl()}) apunte a una base de Turso válida y que ` +
+          "la red de la función serverless la alcance.",
+      );
     } else {
       throw e;
     }
   }
   g().__ghSchemaReady = true;
   return base;
+}
+
+/** Aplica el esquema canónico, avisando si el `.sql` no viaja en la función. */
+async function applySchemaFile(base: DbHandle): Promise<void> {
+  let sql: string;
+  try {
+    sql = readSchemaSql();
+  } catch (cause) {
+    throw new DatabaseUnavailableError(
+      `La base de datos no tiene tablas y no se encontró database/schema.sql: ${describeError(cause)}`,
+      "El fichero debe incluirse en el paquete de la función. En next.config.mjs está " +
+        'configurado outputFileTracingIncludes: { "/*": ["./database/**/*.sql"] }.',
+    );
+  }
+  await base.exec(sql);
 }
 
 /** Motor a usar: el de la transacción si estamos dentro de `tx`, si no el base. */
@@ -410,7 +581,7 @@ export async function exec(sql: string): Promise<void> {
 /** Aplica database/schema.sql (idempotente: usa IF NOT EXISTS). */
 export async function applySchema(): Promise<void> {
   const handle = await baseHandle();
-  await handle.exec(readSchemaSql());
+  await applySchemaFile(handle);
   g().__ghSchemaReady = true;
 }
 

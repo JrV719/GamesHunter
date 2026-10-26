@@ -40,8 +40,32 @@ const SECTIONS = [
   },
 ];
 
+type FooterData = {
+  platforms: { id: string; slug: string; name: string }[];
+  categories: { id: string; slug: string; name: string }[];
+  dbDown: boolean;
+};
+
+/** Lee las listas del pie; si la base falla, devuelve listas vacías sin romper. */
+async function loadFooterData(): Promise<FooterData> {
+  try {
+    const [platforms, categories] = await Promise.all([getPlatforms(), getCategories()]);
+    return { platforms, categories, dbDown: false };
+  } catch (e) {
+    console.error(
+      "[GamesHunter] El pie no ha podido leer las listas de la base de datos:",
+      (e as Error).message,
+    );
+    return { platforms: [], categories: [], dbDown: true };
+  }
+}
+
 export async function Footer() {
-  const [platforms, categories] = await Promise.all([getPlatforms(), getCategories()]);
+  // El pie se renderiza desde el layout raíz, así que cualquier fallo de la
+  // base de datos aquí tumbaba TODAS las rutas del sitio y ninguna frontera de
+  // error por ruta podía actuar. Se degrada en lugar de romper: si la base no
+  // responde se muestran los enlaces estáticos y un aviso, sin inventar datos.
+  const { platforms, categories, dbDown } = await loadFooterData();
   const year = new Date().getFullYear();
 
   return (
@@ -112,6 +136,13 @@ export async function Footer() {
                 </li>
               ))}
             </ul>
+
+            {dbDown && (
+              <p className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
+                No hemos podido conectar con la base de datos del catálogo, así que las listas de
+                plataformas y géneros no están disponibles. El resto de la web sigue funcionando.
+              </p>
+            )}
           </div>
         </div>
 

@@ -11,9 +11,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] });
   }
 
-  const results = await searchGamesSuggest(q, limit);
-  return NextResponse.json(
-    { results },
-    { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=120" } },
-  );
+  try {
+    const results = await searchGamesSuggest(q, limit);
+    return NextResponse.json(
+      { results },
+      { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=120" } },
+    );
+  } catch (e) {
+    // Sin esto el buscador recibía un 500 con el cuerpo vacío y fallaba sin
+    // explicación. Se devuelve JSON para que la interfaz pueda avisar.
+    console.error("[GamesHunter] Fallo en /api/search:", (e as Error).message);
+    return NextResponse.json(
+      { results: [], error: "No se pudo consultar el catálogo." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }

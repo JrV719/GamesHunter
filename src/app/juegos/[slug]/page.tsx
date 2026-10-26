@@ -16,6 +16,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { GameUserActions } from "@/components/game/GameUserActions";
 import { CommunitySection } from "@/components/game/CommunitySection";
 import { isStaff } from "@/lib/permissions";
+import { siteUrl } from "@/lib/site-url";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -66,7 +67,7 @@ function JsonLd({ game }: { game: Awaited<ReturnType<typeof getGameDetail>> }) {
   if (!game) return null;
   const profile = game.profile as any;
   const difficulty = game.difficulties.find((d: any) => d.kind === "platinum")?.score ?? 5;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/juegos/${game.slug}`;
+  const url = `${siteUrl()}/juegos/${game.slug}`;
 
   const videoGame = {
     "@context": "https://schema.org",
@@ -74,7 +75,7 @@ function JsonLd({ game }: { game: Awaited<ReturnType<typeof getGameDetail>> }) {
     name: game.title,
     description: game.summary,
     url,
-    image: game.coverImage ? `${process.env.NEXT_PUBLIC_SITE_URL}${game.coverImage}` : undefined,
+    image: game.coverImage ? `${siteUrl()}${game.coverImage}` : undefined,
     datePublished: game.releaseDate ?? undefined,
     genre: (game.categories as any[]).map((c: any) => c.name),
     gamePlatform: game.platforms.map((p: any) => p.platform.name),

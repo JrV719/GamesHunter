@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { getAllGameSlugs } from "@/lib/queries/games";
 import { getCategories } from "@/lib/queries/taxonomy";
 import { all } from "@/lib/db";
+import { siteUrl } from "@/lib/site-url";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const BASE = siteUrl();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [games, categories, guides] = await Promise.all([

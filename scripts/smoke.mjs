@@ -31,6 +31,7 @@ const routes = [
   ["/registro", 200],
   ["/sitemap.xml", 200],
   ["/robots.txt", 200],
+  ["/api/health", 200],
   ["/api/search?q=blood", 200],
   // Sin sesión: la comunidad se lee, el panel y la escritura redirigen.
   ["/admin", 307],
