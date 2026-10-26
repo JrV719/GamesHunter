@@ -61,10 +61,13 @@ export default function GlobalRouteError({
               </p>
               <p className="text-base-400">
                 Faltan las variables de entorno de la base de datos en el proyecto de Vercel (
+                <code className="text-accent-300">TURSO_DATABASE_URL</code> y{" "}
+                <code className="text-accent-300">TURSO_AUTH_TOKEN</code>; también se aceptan{" "}
                 <code className="text-accent-300">DATABASE_URL</code> y{" "}
                 <code className="text-accent-300">DATABASE_AUTH_TOKEN</code>). Se configuran en{" "}
                 <strong className="text-base-300">Settings → Environment Variables</strong> y
-                requieren un nuevo despliegue para aplicarse.
+                requieren un nuevo despliegue para aplicarse. El detalle exacto está en{" "}
+                <code className="text-accent-300">/api/health</code>.
               </p>
             </div>
 

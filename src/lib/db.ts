@@ -52,8 +52,74 @@ function toInput(params: SqlParam[]): (string | number | null | Uint8Array)[] {
 // Selección de motor
 // ----------------------------------------------------------------------------
 
+/**
+ * Nombres aceptados para la conexión, en orden de prioridad.
+ *
+ * `DATABASE_URL` / `DATABASE_AUTH_TOKEN` son la convención propia del proyecto
+ * (se introdujeron en el commit 0c4080e), no la de ningún proveedor. La
+ * integración oficial de Turso en el Marketplace de Vercel inyecta
+ * `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`, así que se aceptan también: sin
+ * esto, tener Turso conectado en Vercel no servía absolutamente de nada.
+ */
+const DB_URL_VARS = [
+  "DATABASE_URL",
+  "TURSO_DATABASE_URL",
+  "LIBSQL_URL",
+  "LIBSQL_DATABASE_URL",
+] as const;
+
+const DB_TOKEN_VARS = [
+  "DATABASE_AUTH_TOKEN",
+  "TURSO_AUTH_TOKEN",
+  "LIBSQL_AUTH_TOKEN",
+  "TURSO_DB_TOKEN",
+] as const;
+
+/**
+ * Lee la primera variable definida de la lista.
+ *
+ * Devuelve también de qué nombre sale para poder decirlo en `/api/health` y en
+ * los errores (nunca el valor). Se limpian espacios y comillas porque al pegar
+ * desde un `.env` en la interfaz de Vercel es habitual arrastrar `"..."`.
+ */
+function readEnv(
+  names: readonly string[],
+  skip?: (value: string) => boolean,
+): { value: string; name: string | null } {
+  for (const name of names) {
+    const raw = process.env[name];
+    if (raw === undefined) continue;
+    const value = raw.trim().replace(/^["']/, "").replace(/["']$/, "").trim();
+    if (!value) continue;
+    if (skip?.(value)) continue;
+    return { value, name };
+  }
+  return { value: "", name: null };
+}
+
+/**
+ * URL de conexión resuelta y variable de la que procede.
+ *
+ * En Vercel una URL `file:` nunca puede funcionar. Si queda una vieja en
+ * `DATABASE_URL` y a la vez la integración de Turso inyectó
+ * `TURSO_DATABASE_URL`, se prefiere la remota en lugar de fallar por la local.
+ */
+export function databaseUrl(): { value: string; name: string | null } {
+  const found = readEnv(DB_URL_VARS);
+  if (isServerlessRuntime() && found.value.startsWith("file:")) {
+    const remote = readEnv(DB_URL_VARS, (value) => value.startsWith("file:"));
+    if (remote.value) return remote;
+  }
+  return found;
+}
+
+/** Token de Turso resuelto y variable de la que procede. */
+export function databaseToken(): { value: string; name: string | null } {
+  return readEnv(DB_TOKEN_VARS);
+}
+
 function resolveDbUrl(): string {
-  return process.env.DATABASE_URL?.trim() ?? "file:./dev.db";
+  return databaseUrl().value || "file:./dev.db";
 }
 
 export function dbKind(): DbKind {
@@ -114,17 +180,20 @@ function isBuildPhase(): boolean {
   return process.env.NEXT_PHASE === "phase-production-build";
 }
 
-/** ¿`DATABASE_URL` apunta a un motor local de ficheros? */
+/** ¿La conexión configurada apunta a un motor local de ficheros? */
 export function usesLocalFile(): boolean {
-  const url = process.env.DATABASE_URL?.trim();
+  const url = databaseUrl().value;
   return !url || url.startsWith("file:");
 }
 
 const CONFIG_HINT = [
-  "Configura en el proyecto de Vercel (Settings → Environment Variables):",
+  "Configura en Vercel (Settings → Environment Variables, Production y Preview):",
   "  DATABASE_URL          = libsql://<tu-base>.turso.io",
-  "  DATABASE_AUTH_TOKEN   = <token de `npx turso db tokens create <base>`>",
+  "  DATABASE_AUTH_TOKEN   = <token de Turso>",
+  "También se aceptan TURSO_DATABASE_URL / TURSO_AUTH_TOKEN (los que inyecta",
+  "la integración de Turso del Marketplace de Vercel).",
   "SESSION_SECRET también es obligatorio en producción para poder iniciar sesión.",
+  "Después de añadir variables hay que volver a desplegar: no se aplican al vuelo.",
   "Ver README.md §3 «Despliegue en Vercel».",
 ].join("\n");
 
@@ -326,7 +395,7 @@ async function libsqlHandle(): Promise<DbHandle> {
     try {
       g().__ghLibsql = mod.createClient({
         url: resolveDbUrl(),
-        authToken: process.env.DATABASE_AUTH_TOKEN,
+        authToken: databaseToken().value || undefined,
       });
     } catch (cause) {
       throw new DatabaseUnavailableError(
@@ -430,9 +499,10 @@ async function baseHandle(): Promise<DbHandle> {
   if (cached) return cached;
   const url = resolveDbUrl();
   if (/^postgres(ql)?:\/\//i.test(url)) {
-    throw new Error(
-      "DATABASE_URL apunta a PostgreSQL. GamesHunter despliega en Vercel con Turso (libSQL): " +
-        "cambia la variable a libsql://... o consulta la sección «Migrar a PostgreSQL» del README.",
+    throw new DatabaseUnavailableError(
+      `${databaseUrl().name ?? "DATABASE_URL"} apunta a PostgreSQL, pero GamesHunter habla libSQL/SQLite.`,
+      "Usa la URL de Turso (libsql://...) o elimina esa variable. Cambiar a PostgreSQL " +
+        "obligaría a reescribir todas las consultas; ver «Migrar a PostgreSQL» en el README.",
     );
   }
   // Falla rápido y con un mensaje útil si el despliegue no tiene base de datos.

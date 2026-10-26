@@ -114,20 +114,40 @@ vercel link
 vercel --prod
 ```
 
+### Motor y proveedor reales
+
+| | |
+| --- | --- |
+| Motor en producción | **libSQL** (fork de SQLite mantenido por Turso) |
+| Proveedor | **Turso Cloud** |
+| Driver | `@libsql/client/http` (HTTP puro, sin bindings nativos) |
+| Motor en local | `node:sqlite` sobre `prisma/dev.db` |
+
+No se usa Prisma Client en tiempo de ejecución: `@prisma/client` figura en las
+dependencias, pero **ningún archivo lo importa**. Prisma sólo aporta el esquema
+de referencia (`prisma/schema.prisma`); el seed habla SQLite directamente con
+`node:sqlite`. Por eso migrar a PostgreSQL no es cuestión de cambiar una
+variable: habría que reescribir las consultas.
+
 ### Variables de entorno (obligatorias en producción)
 
-Se configuran en **Vercel → Settings → Environment Variables** y hay que
-marcarlas para *Production*, *Preview* y *Development*. Cada variable añadida
-requiere un nuevo despliegue para aplicarse.
+Se configuran en **Vercel → Settings → Environment Variables**, marcando
+*Production* **y** *Preview*. Cada variable añadida requiere **un despliegue
+nuevo**: no se aplican en caliente.
 
 | Variable | Obligatoria | Valor | Para qué sirve |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | **Sí** | `libsql://<tu-base>.turso.io` | Apunta a la base de Turso. Sin ella el catálogo no se puede leer. |
-| `DATABASE_AUTH_TOKEN` | **Sí** | Token de `npx turso db tokens create <base>` | Autenticación contra Turso. |
+| `TURSO_DATABASE_URL` | **Sí** | `libsql://<base>-<org>.turso.io` | URL de la base. Es el nombre que documenta Turso para Vercel. |
+| `TURSO_AUTH_TOKEN` | **Sí** | token de Turso | Autenticación contra la base. |
 | `SESSION_SECRET` | **Sí** | 64 caracteres aleatorios | Firma las cookies de sesión (login, registro, comunidad). |
 | `NEXT_PUBLIC_SITE_URL` | No | `https://tu-dominio.com` | URLs canónicas, Open Graph, `robots.txt` y `sitemap.xml`. Si se omite se usa el dominio que Vercel inyecta. |
 | `NEXT_PUBLIC_SITE_NAME` | No | `Games Hunter` | Nombre visible del sitio. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_USERNAME` | No | — | Administrador inicial que crea el seed. |
+
+El código acepta, por orden de prioridad: `DATABASE_URL`, `TURSO_DATABASE_URL`,
+`LIBSQL_URL`, `LIBSQL_DATABASE_URL` para la URL; y `DATABASE_AUTH_TOKEN`,
+`TURSO_AUTH_TOKEN`, `LIBSQL_AUTH_TOKEN`, `TURSO_DB_TOKEN` para el token. En
+Vercel, si conviven una URL `file:` y una remota, gana la remota.
 
 > **El error «Application error: a server-side exception has occurred» casi
 > siempre significa que falta `DATABASE_URL`.** Las funciones de Vercel se
@@ -139,7 +159,7 @@ requiere un nuevo despliegue para aplicarse.
 
 | Lo que ves | Causa |
 | --- | --- |
-| `Error: unable to open database file` en los registros, en `/` y en `/favicon.ico` | `DATABASE_URL` no existe (o es `file:...`) y SQLite intenta abrir un fichero en un disco de sólo lectura. |
+| `Error: unable to open database file` en los registros, en `/` y en `/favicon.ico` | No hay ninguna variable de conexión (o es `file:...`) y SQLite intenta abrir un fichero en un disco de sólo lectura. |
 | «Application error: a server-side exception has occurred» | Lo mismo, en la versión anterior: la excepción subía hasta el layout raíz y no había frontera de error. |
 | `/sitemap.xml` sólo con las 7 URLs base y `og:url` en `localhost:3000` | Build sin variables de entorno: se prerenderizó con la base local vacía. |
 
@@ -148,29 +168,48 @@ caía en el 404, que se renderiza con el layout raíz y por tanto consultaba la 
 de datos. Ahora hay `src/app/favicon.ico` y `src/app/icon.svg`, así que el icono
 se sirve como fichero estático y no toca la base.
 
-### Qué hacer
+### Qué hacer (5 minutos)
 
-1. Crear la base en Turso (ver más abajo) y copiar su URL y su token.
-2. Añadir `DATABASE_URL`, `DATABASE_AUTH_TOKEN` y `SESSION_SECRET` en Vercel.
-3. **Volver a desplegar** (las variables no se aplican a despliegues ya hechos).
-4. Abrir `/api/health`: debe responder `200` con `"ok": true`.
+**1. Crear la base en Turso Cloud** desde el navegador. El CLI de Turso en
+Windows exige WSL, así que el panel es la vía más corta:
 
-Si `/api/health` devuelve `503`, el campo `detail` de cada comprobación dice
-exactamente qué falta. Los registros de la función empiezan por `[GamesHunter]`
-y nunca incluyen valores de credenciales.
+1. Entra en <https://turso.tech> y crea una cuenta.
+2. **Create Database** → nombre `gameshunter` → región cercana a la de Vercel.
+3. **No uses el motor «Turso Database»** (`--tursodb`): está en preview y
+   necesita otro driver. GamesHunter usa el motor **libSQL**, que es el que se
+   crea por defecto.
+4. Copia la **Database URL** (`libsql://...`).
+5. En **Tokens**, crea uno y cópialo (sólo se muestra una vez).
 
-Para crear la base de Turso:
+**2. Pegar las variables en Vercel** (Settings → Environment Variables),
+marcando **Production** y **Preview**:
 
-```bash
-npx turso db create gameshunter
-npx turso db tokens create gameshunter --type jwt
+| Nombre | Valor |
+| --- | --- |
+| `TURSO_DATABASE_URL` | la URL `libsql://...` |
+| `TURSO_AUTH_TOKEN` | el token |
+| `SESSION_SECRET` | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+
+**3. Cargar los datos actuales en esa base** desde PowerShell, en el proyecto.
+No se borra nada: `db:push` aplica el esquema con `IF NOT EXISTS` y después
+inserta el volcado.
+
+```powershell
+npm run db:export
+
+$env:TURSO_DATABASE_URL="libsql://TU-BASE.turso.io"
+$env:TURSO_AUTH_TOKEN="TU-TOKEN"
+npm run db:verify                                  # debe ver 13 juegos
+npm run db:push -- --apply prisma/export.sql
+npm run db:verify                                  # confirma contra la remota
+
+Remove-Item Env:\TURSO_DATABASE_URL, Env:\TURSO_AUTH_TOKEN
 ```
 
-Genera el secreto de sesión con:
+**4. Redesplegar** (Deployments → ⋯ → Redeploy, o `git push`).
 
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+**5. Verificar** que `https://tu-dominio.com/api/health` responde `200` con
+`"ok": true`.
 
 **No hace falta ejecutar migraciones en Vercel.** La primera conexión detecta que
 faltan tablas y aplica `database/schema.sql` automáticamente (todo el esquema usa
@@ -178,25 +217,26 @@ faltan tablas y aplica `database/schema.sql` automáticamente (todo el esquema u
 
 ### Comprobar el despliegue
 
-Hay una sonda de diagnóstico en **`/api/health`** que responde `200` si todo lo
-obligatorio está correcto y `503` si falta algo:
+`/api/health` responde `200` si todo lo obligatorio está correcto y `503` si
+falta algo:
 
 ```bash
 curl -s https://tu-dominio.com/api/health
 ```
 
-Devuelve qué variables están definidas (nunca sus valores) y una consulta real a
-la base, con el número de juegos del catálogo. Es la forma más rápida de
-descartar un problema de configuración sin mirar los registros.
+Devuelve, sin revelar valores:
 
-Para llevar contenido a producción:
+- `variablesPresentes`: **nombres** de las variables de base de datos que Vercel
+  sí ve. Si aquí aparece `TURSO_DATABASE_URL` pero la conexión falla, el problema
+  es el token o la URL, no el nombre.
+- `conexionDesde` / `tokenDesde`: qué variable se está usando.
+- Una consulta real a la base con el número de juegos del catálogo.
 
-```bash
-npm run db:seed                                   # en local
-npm run db:export                                 # genera prisma/export.sql
-DATABASE_URL="libsql://..." DATABASE_AUTH_TOKEN="..." \
-  npm run db:push -- --apply prisma/export.sql    # lo aplica en Turso
-```
+Los registros de la función empiezan por `[GamesHunter]` y nunca incluyen
+credenciales.
+
+`npm run db:verify` hace la misma comprobación desde tu máquina, contra la base
+local o contra Turso según las variables del entorno.
 
 ---
 

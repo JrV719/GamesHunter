@@ -13,11 +13,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { dbToken, dbUrl, resolvedUrl } from "./env-db.mjs";
 
 const reset = process.argv.includes("--reset");
 const applyIndex = process.argv.indexOf("--apply");
 const applyFile = applyIndex > -1 ? process.argv[applyIndex + 1] : null;
-const url = process.env.DATABASE_URL ?? "file:./dev.db";
+const url = resolvedUrl();
+const authToken = dbToken();
 const isRemote = !url.startsWith("file:") && url !== "";
 const schema = fs.readFileSync(path.join(process.cwd(), "database", "schema.sql"), "utf8");
 
@@ -41,10 +43,10 @@ async function count(client) {
 // Turso / libSQL remoto
 // ---------------------------------------------------------------------------
 async function pushRemote() {
-  if (!process.env.DATABASE_AUTH_TOKEN) {
+  if (!authToken.value) {
     console.error(
-      "DATABASE_URL apunta a un servidor remoto pero falta DATABASE_AUTH_TOKEN.\n" +
-        "Créalo con:  npx turso db tokens create <nombre-de-la-base>",
+      `${dbUrl().name ?? "DATABASE_URL"} apunta a un servidor remoto pero falta el token.\n` +
+        "Define DATABASE_AUTH_TOKEN (o TURSO_AUTH_TOKEN) con el token de Turso.",
     );
     process.exit(1);
   }
@@ -54,19 +56,33 @@ async function pushRemote() {
   }
 
   const { createClient } = await import("@libsql/client/http");
-  const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN });
+  const client = createClient({ url, authToken: authToken.value });
 
-  // executeMultiple ejecuta un script completo con varias sentencias.
-  await client.executeMultiple(schema);
+  try {
+    // executeMultiple ejecuta un script completo con varias sentencias.
+    await client.executeMultiple(schema);
 
-  if (applyFile) {
-    await client.executeMultiple(fs.readFileSync(path.resolve(applyFile), "utf8"));
-    console.log(`  volcado aplicado: ${applyFile}`);
+    if (applyFile) {
+      await client.executeMultiple(fs.readFileSync(path.resolve(applyFile), "utf8"));
+      console.log(`  volcado aplicado: ${applyFile}`);
+    }
+
+    const { tables, indexes } = await count(client);
+    console.log(`Base de datos lista: ${url}`);
+    console.log(`  ${tables} tablas, ${indexes} índices`);
+  } catch (e) {
+    const detail = `${e?.code ?? ""} ${e?.message ?? e}`.trim();
+    console.error(`\n  No se pudo aplicar el esquema en ${url}`);
+    console.error(`  Detalle: ${detail}`);
+    if (/404|not found/i.test(detail)) {
+      console.error("  Turso no encuentra esa base: revisa la URL exacta del panel.");
+    } else if (/401|403|AUTH|unauthorized|forbidden/i.test(detail)) {
+      console.error("  El token no es válido o no tiene permisos de escritura.");
+    } else if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(detail)) {
+      console.error("  No hay conectividad con el host de la base.");
+    }
+    process.exit(1);
   }
-
-  const { tables, indexes } = await count(client);
-  console.log(`Base de datos lista: ${url}`);
-  console.log(`  ${tables} tablas, ${indexes} índices`);
 }
 
 // ---------------------------------------------------------------------------

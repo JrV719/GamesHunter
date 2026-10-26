@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { resolvedUrl } from "./env-db.mjs";
 
 const outIndex = process.argv.indexOf("--out");
 const outPath =
@@ -21,7 +22,7 @@ const outPath =
     ? process.argv[outIndex + 1]
     : path.join(process.cwd(), "prisma", "export.sql");
 
-const url = process.env.DATABASE_URL ?? "file:./dev.db";
+const url = resolvedUrl();
 if (!url.startsWith("file:")) {
   console.error(
     "db:export lee la base SQLite local. Apunta DATABASE_URL a un fichero file:... " +
